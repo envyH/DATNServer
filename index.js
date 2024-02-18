@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require("express");
 const app = express();
 const path = require("path");
+const createError = require("http-errors");
 const compression = require('compression');
 const { default: helmet } = require('helmet');
 const morgan = require('morgan');
@@ -36,7 +37,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "/src/public")));
 
 
 process.on('warning', (warning) => {
@@ -49,6 +50,11 @@ const db = require('./src/configs/mongoose/config');
 // init route
 app.use('/', require('./src/router'));
 
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+    next(createError(404));
+});
+
 // handle error
 app.use((req, res, next) => {
     const error = new Error("Not found");
@@ -58,11 +64,17 @@ app.use((req, res, next) => {
 
 app.use((error, req, res, next) => {
     const statusCode = error.status | 500;
-    return res.status(statusCode).json({
-        status: 'error',
-        code: statusCode,
-        message: error.message || "Internal Server Error"
-    });
+    res.locals.message = error.message || "Internal Server Error";
+    res.locals.error = req.app.get("env") === "development" ? error : {};
+
+    // render the error page
+    res.status(statusCode);
+    return res.render("error");
+    // return res.status(statusCode).json({
+    //     status: 'error',
+    //     code: statusCode,
+    //     message: error.message || "Internal Server Error"
+    // });
 });
 
 

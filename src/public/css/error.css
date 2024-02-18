@@ -1,0 +1,11 @@
+body {
+    background: rgb(255, 255, 255);
+    background-image: -webkit-gradient(radial, 50% 50%, 0, 50% 50%, 800, from(#ffffff), to(#d1e3f3));
+    padding-top: 5%;
+}
+
+.img-error {
+    position: static;
+    width: 220px;
+    height: 220px;
+}
