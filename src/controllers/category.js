@@ -30,7 +30,7 @@ class CategoryController {
                 name,
                 created_time: dataTime,
             });
-            console.log(fileimg);
+            // console.log(fileimg);
             let img = await UploadFileFirebase.uploadFileToFBStorage(
                 category._id.toString(),
                 "",
@@ -42,7 +42,7 @@ class CategoryController {
             }
             category.image = img;
             await category.save();
-            return res.redirect("category")
+            return res.redirect("/category")
 
         } catch (e) {
             console.log(e.message);
