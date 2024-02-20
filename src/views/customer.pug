@@ -2,7 +2,6 @@ extends layout
 
 block content
     link(rel='stylesheet' href='https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css')
-    link(rel='stylesheet' href='/css/user.css')
     #main-wrapper.page-wrapper(data-layout='vertical' data-navbarbg='skin6' data-sidebartype='full' data-sidebar-position='fixed' data-header-position='fixed')
         // Sidebar Start
         aside.left-sidebar
@@ -249,24 +248,24 @@ block content
                                 button.btn.btn-secondary(type="button", data-bs-dismiss="modal") Close
                                 button.btn.btn-primary#updateEmployeeButton(type="submit") Update Customer
 
-    script(src='/js/customer.js')
-    script.
-        function removeDiacritics(str) {
-            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        }
-        function searchUsers() {
-            const query = removeDiacritics(document.getElementById('searchInput').value.toLowerCase());
-            const candidateRows = document.querySelectorAll('.candidates-list');
+    //- script(src='/js/customer.js')
+    //- script.
+    //-     function removeDiacritics(str) {
+    //-         return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    //-     }
+    //-     function searchUsers() {
+    //-         const query = removeDiacritics(document.getElementById('searchInput').value.toLowerCase());
+    //-         const candidateRows = document.querySelectorAll('.candidates-list');
 
-            candidateRows.forEach(function (row) {
-                const userFullName = removeDiacritics(row.querySelector('.candidate-list-title a').innerText.toLowerCase());
-                const userEmail = removeDiacritics(row.querySelector('.candidate-list-option span').innerText.toLowerCase());
+    //-         candidateRows.forEach(function (row) {
+    //-             const userFullName = removeDiacritics(row.querySelector('.candidate-list-title a').innerText.toLowerCase());
+    //-             const userEmail = removeDiacritics(row.querySelector('.candidate-list-option span').innerText.toLowerCase());
 
-                // Nếu không có thông tin tìm kiếm hoặc tìm thấy kết quả, hiển thị lại dòng
-                if (!query || userFullName.includes(query) || userEmail.includes(query)) {
-                    row.style.display = 'table-row';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
+    //-             // Nếu không có thông tin tìm kiếm hoặc tìm thấy kết quả, hiển thị lại dòng
+    //-             if (!query || userFullName.includes(query) || userEmail.includes(query)) {
+    //-                 row.style.display = 'table-row';
+    //-             } else {
+    //-                 row.style.display = 'none';
+    //-             }
+    //-         });
+    //-     }

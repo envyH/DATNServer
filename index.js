@@ -34,8 +34,15 @@ app.set("view engine", "pug");
 
 app.use(cors());
 app.use(morgan("dev"));
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: false,
+    xDownloadOptions: false,
+}),
+);
 app.use(compression());
+
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());

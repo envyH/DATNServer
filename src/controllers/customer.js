@@ -5,7 +5,7 @@ class CustomerController {
     show = async (req, res) => {
         try {
             let listCus = await CustomerModel.customerModel.find({ status: { $ne: 'banned' } });
-            console.log(listCus);
+            // console.log(listCus);
             return res.render('customer', {
                 terifyWith: "Admin",
                 customers: listCus,

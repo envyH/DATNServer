@@ -9,7 +9,7 @@ block content
             div
                 .brand-logo.d-flex.align-items-center.justify-content-between
                     a.text-nowrap.logo-img(href='/stech.manager/home')
-                        img(src='https://github.com/wsdesignuiux/Android-ui-templates/blob/master/images/otp_verification_white_ui_kit.jpg?raw=true' width='180' alt='')
+                        img(src='/images/logo.jpeg' width='180' alt='')
                     #sidebarCollapse.close-btn.d-xl-none.d-block.sidebartoggler.cursor-pointer
                         i.ti.ti-x.fs-8
                 // Sidebar navigation
@@ -296,25 +296,25 @@ block content
                             button.btn.btn-dark(type='button' data-bs-dismiss='modal') Quay lại
                             button.btn.btn-danger(type='button' id='confirmDelete') Xoá
                             
-    script(src='/js/category.js')
-    script.
-        function removeDiacritics(str) {
-            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        }
-        function searchCategory() {
-            const query = removeDiacritics(document.getElementById('searchInput').value.toLowerCase());
-            const candidateRows = document.querySelectorAll('.col-sm-6.col-xl-3');
+    //- script(src='/js/category.js')
+    //- script.
+    //-     function removeDiacritics(str) {
+    //-         return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    //-     }
+    //-     function searchCategory() {
+    //-         const query = removeDiacritics(document.getElementById('searchInput').value.toLowerCase());
+    //-         const candidateRows = document.querySelectorAll('.col-sm-6.col-xl-3');
 
-            candidateRows.forEach(function (row) {
-                const cateName = removeDiacritics(row.querySelector('.card-body.pt-3.p-4 h6').innerText.toLowerCase());
+    //-         candidateRows.forEach(function (row) {
+    //-             const cateName = removeDiacritics(row.querySelector('.card-body.pt-3.p-4 h6').innerText.toLowerCase());
 
-                // Nếu không có thông tin tìm kiếm hoặc tìm thấy kết quả, hiển thị lại dòng
-                if (!query || cateName.includes(query)) {
-                    row.style.display = 'table-row';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
+    //-             // Nếu không có thông tin tìm kiếm hoặc tìm thấy kết quả, hiển thị lại dòng
+    //-             if (!query || cateName.includes(query)) {
+    //-                 row.style.display = 'table-row';
+    //-             } else {
+    //-                 row.style.display = 'none';
+    //-             }
+    //-         });
+    //-     }
 
 
