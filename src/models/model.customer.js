@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const avatar = "http://localhost:3000/images/logo.jpeg";
+const avatar = "https://stech-993p.onrender.com//images/logo.jpeg";
 const status = "Not verified";
 const customerSchema = mongoose.Schema(
     {

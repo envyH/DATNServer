@@ -1,7 +1,7 @@
 const moment = require('moment-timezone');
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
-
+const bcrypt = require('bcrypt');
 
 const specificTimeZone = 'Asia/Ho_Chi_Minh';
 const formatType = "YYYY-MM-DD-HH:mm:ss";
@@ -32,16 +32,16 @@ class CustomerController {
 
 
         if (email === undefined || email.trim().length == 0) {
-            return res.send({ message: "email require", statusCode: 400, code: "auth/missing-email", timestamp });
+            return res.send({ message: "missing emai", statusCode: 400, code: "auth/missing-email", timestamp });
         }
         if (password === undefined || password.trim().length == 0) {
-            return res.send({ message: "password require", statusCode: 400, code: "auth/missing-password", timestamp });
+            return res.send({ message: "missing password", statusCode: 400, code: "auth/missing-password", timestamp });
         }
         if (fullName === undefined || fullName.trim().length == 0) {
-            return res.send({ message: "full-name require", statusCode: 400, code: "auth/missing-fullname", timestamp });
+            return res.send({ message: "missing full-name", statusCode: 400, code: "auth/missing-fullname", timestamp });
         }
         if (phoneNumber === undefined || phoneNumber.trim().length == 0) {
-            return res.send({ message: "phone-number require", statusCode: 400, code: "auth/missing-phonenumber", timestamp });
+            return res.send({ message: "missing phone-number", statusCode: 400, code: "auth/missing-phonenumber", timestamp });
         }
 
         if (!phoneNumberRegex.test(phoneNumber)) {
@@ -69,7 +69,7 @@ class CustomerController {
             let cusByEmail = await CustomerModel.customerModel.findOne({ email: email }).lean();
             if (cusByPhone) {
                 return res.send({
-                    message: "phone number already exists",
+                    message: "This phone number is registered to another account",
                     statusCode: 400,
                     code: "auth/phone-exists",
                     timestamp
@@ -96,7 +96,7 @@ class CustomerController {
                     })
                 }
                 return res.send({
-                    message: "email already exists",
+                    message: "This email is registered to another account",
                     statusCode: 400,
                     code: "auth/email-exists",
                     timestamp
@@ -127,9 +127,10 @@ class CustomerController {
             //     });
             // }
             // TODO create customer
+            const passwordHash = await bcrypt.hash(password, 10);
             let cus = new CustomerModel.customerModel({
                 email: email,
-                password: password,
+                password: passwordHash,
                 full_name: fullName,
                 phone_number: phoneNumber,
                 created_time: timestamp,
@@ -148,7 +149,9 @@ class CustomerController {
             } else {
                 await cus.save();
             }
+            cus.password = password;
             return res.send({
+                customer: cus,
                 message: "Register success!\nPlease verify your account in email.",
                 statusCode: 200,
                 code: "auth/verify",
@@ -170,7 +173,7 @@ class CustomerController {
         let type = req.query.type;
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
-        
+
         try {
             let cus = await CustomerModel.customerModel.findById(key);
             if (cus) {
@@ -218,9 +221,10 @@ class CustomerController {
             return res.send({ message: "password require", statusCode: 400, code: "auth/missing-password", timestamp });
         }
 
+
         try {
-            let cusEmail = await CustomerModel.customerModel.findOne({ email: email, password: password })
-            let cusPhone = await CustomerModel.customerModel.findOne({ phone_number: phoneNumer, password: password })
+            let cusEmail = await CustomerModel.customerModel.findOne({ email: email });
+            let cusPhone = await CustomerModel.customerModel.findOne({ phone_number: phoneNumer });
             if (!cusEmail && !cusPhone) {
                 return res.send({
                     message: "Login failed: Account does not exist",
@@ -230,7 +234,17 @@ class CustomerController {
                 });
             }
 
+
             if (cusPhone) {
+                const match = await bcrypt.compare(password, cusPhone.password);
+                if (!match) {
+                    return res.send({
+                        message: "Incorrect password.",
+                        statusCode: 400,
+                        code: "auth/incorrect-password",
+                        timestamp
+                    });
+                }
                 if (cusPhone.status !== "Has been activated") {
                     return res.send({
                         message: "Your account has not been activated or has been locked, please contact hotline 0999999999 for help.",
@@ -269,6 +283,7 @@ class CustomerController {
                         return res.send({
                             message: "Please verify your account",
                             id: cusPhone._id,
+                            customer: cusPhone,
                             statusCode: 200,
                             code: "auth/verify-phone",
                             timestamp
@@ -286,6 +301,15 @@ class CustomerController {
             }
 
             if (cusEmail) {
+                const match = await bcrypt.compare(password, cusEmail.password);
+                if (!match) {
+                    return res.send({
+                        message: "Incorrect password.",
+                        statusCode: 400,
+                        code: "auth/incorrect-password",
+                        timestamp
+                    });
+                }
                 if (cusEmail.status !== "Has been activated") {
                     return res.send({
                         message: "Your account has not been activated or has been locked, please contact Email: datnstech@gmail.com for help.",
@@ -305,9 +329,11 @@ class CustomerController {
                 } else {
                     cusEmail.otp = index;
                     await cusEmail.save();
+                    cusEmail.password = password;
                     return res.send({
                         message: "Please verify your account",
                         id: cusEmail._id,
+                        customer: cusEmail,
                         statusCode: 200,
                         code: "auth/verify",
                         timestamp
@@ -325,14 +351,71 @@ class CustomerController {
         }
     }
 
+    checkLogin = async (req, res) => {
+        let email = req.body.email;
+        let phoneNumer = req.body.phone_number;
+        let password = req.body.password;
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+        if (email === undefined || email.trim().length == 0) {
+            return res.send({ message: "email require", statusCode: 400, code: "auth/missing-email", timestamp });
+        }
+
+        try {
+            let cusEmail = await CustomerModel.customerModel.findOne({ email: email });
+            if (cusEmail) {
+                const match = await bcrypt.compare(password, cusEmail.password);
+                if (match) {
+                    return res.send({
+                        message: "OKE",
+                        statusCode: 200,
+                        code: `auth/200`,
+                        timestamp
+                    });
+                }
+                else {
+                    return res.send({
+                        message: "Wrong password",
+                        statusCode: 400,
+                        code: `auth/wrong-pass`,
+                        timestamp
+                    });
+                }
+            }
+            else {
+                return res.send({
+                    message: "Not exists",
+                    statusCode: 400,
+                    code: `auth/account-notexists`,
+                    timestamp
+                });
+            }
+
+
+        } catch (e) {
+            console.log(e.message);
+            return res.send({
+                message: e.message,
+                statusCode: 200,
+                code: `auth/${e.code}`,
+                timestamp
+            });
+        }
+    }
+
     verifyLogin = async (req, res) => {
-        const customerID = req.body.customerID;
+        const customerID = req.body._id;
+        const password = req.body.password;
         const otp = req.body.otp;
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
         if (customerID === undefined || customerID.trim().length == 0) {
             return res.send({ message: "customerID require", statusCode: 400, code: "auth/missing-customerid", timestamp });
+        }
+        if (password === undefined || password.trim().length == 0) {
+            return res.send({ message: "password require", statusCode: 400, code: "auth/missing-password", timestamp });
         }
         if (otp === undefined || otp.trim().length == 0) {
             return res.send({ message: "otp require", statusCode: 400, code: "auth/missing-otp", timestamp });
@@ -341,10 +424,11 @@ class CustomerController {
             let customer = await CustomerModel.customerModel.findOne({ _id: customerID, otp: otp })
             if (customer) {
                 let token = jwt.sign({ customer: customer }, process.env.ACCESS_TOKEN_SECRET, {
-                    expiresIn: "2 days",
+                    expiresIn: "1m",
                 });
                 customer.otp = null;
                 await customer.save();
+                customer.password = password;
                 return res.send({
                     customer: customer,
                     token: token,
@@ -356,7 +440,7 @@ class CustomerController {
             } else {
                 return res.send({
                     message: "otp wrong",
-                    statusCode: 400,
+                    statusCode: 200,
                     code: `auth/wrong-otp`,
                     timestamp
                 });
@@ -368,6 +452,47 @@ class CustomerController {
                 code: `auth/${e.code}`,
                 timestamp
             });
+        }
+    }
+
+    addFCM = async (req, res) => {
+        let customerID = req.body._id;
+        let fcm = req.body.fcm;
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+        if (customerID === undefined || customerID.trim().length == 0) {
+            return res.send({ message: "Missing customerID", statusCode: 400, code: "auth/missing-customerid", timestamp });
+        }
+        if (fcm === undefined || fcm.trim().length == 0) {
+            return res.send({ message: "Missing fcm", statusCode: 400, code: "auth/missing-fcm", timestamp });
+        }
+
+        try {
+            let cus = await CustomerModel.customerModel.findById(customerID);
+            if (!cus) {
+                return res.send({
+                    message: "Customer not found",
+                    statusCode: 400,
+                    code: `auth/customer-notfound`,
+                    timestamp
+                });
+            }
+            cus.fcm = fcm;
+            await cus.save();
+            return res.send({
+                message: "add fcm success",
+                statusCode: 200,
+                code: `auth/add-fcm-success`,
+                timestamp
+            });
+        } catch (e) {
+            console.log(`error add fcm: ${e.message}`);
+            return res.send({
+                message: e.message.toString(), statusCode: 400,
+                code: `auth/${e.code}`,
+                timestamp
+            })
         }
     }
 
