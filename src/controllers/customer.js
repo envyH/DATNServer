@@ -17,8 +17,8 @@ class CustomerController {
     register = async (req, res) => {
         let email = req.body.email;
         let password = req.body.password;
-        let fullName = req.body.fullName;
-        let phoneNumber = req.body.phoneNumber;
+        let fullName = req.body.full_name;
+        let phoneNumber = req.body.phone_number;
         let date = new Date();
         let dataTime = moment(date).tz(specificTimeZone).format(formatType);
 
@@ -61,20 +61,61 @@ class CustomerController {
             // TODO check exists
             let cusByPhone = await CustomerModel.customerModel.findOne({ phone_number: phoneNumber, }).lean();
             let cusByEmail = await CustomerModel.customerModel.findOne({ email: email }).lean();
-            if (cusByPhone && cusByPhone.status !== "Not verified") {
+            if (cusByPhone) {
                 return res.send({
                     message: "phone number already exists",
                     statusCode: 400,
                     code: "auth/phone-exists"
                 });
             }
-            if (cusByEmail && cusByEmail.status !== "Not verified") {
+            if (cusByEmail) {
+                if (cusByEmail.status === "Not verified") {
+                    const link = `http://${ipAddressLocal}:${portLocal}/v1/api/customer/verify?type=${"register"}&key=${cusByEmail._id.toString()}`;
+                    const text = `STECH xin chào bạn\nẤn vào đây để xác thực tài khoản: ${link}`;
+                    let index = sendEmailVerifyCus(email, text);
+                    if (index === 0) {
+                        return res.send({
+                            message: "send verify account fail",
+                            statusCode: 400,
+                            code: "auth/unsend-mail"
+                        });
+                    }
+                    return res.send({
+                        message: "Account has been registered\nPlease verify your account in email!",
+                        statusCode: 400,
+                        code: "auth/account-exists"
+                    })
+                }
                 return res.send({
                     message: "email already exists",
                     statusCode: 400,
                     code: "auth/email-exists"
                 });
             }
+            // if (cusByPhone) {
+            //     const link = `http://${ipAddressLocal}:${portLocal}/v1/api/customer/verify?type=${"register"}&key=${cusByPhone._id.toString()}`;
+            //     const text = `STECH xin chào bạn\nẤn vào đây để xác thực tài khoản: ${link}`;
+            //     let index = sendEmailVerifyCus(email, text);
+            //     if (index === 0) {
+            //         return res.send({
+            //             message: "send verify account fail",
+            //             statusCode: 400,
+            //             code: "auth/unsend-mail"
+            //         });
+            //     }
+            //     if (cusByPhone.status === "Not verified") {
+            //         return res.send({
+            //             message: "Account has been registered\nPlease verify your account in email!",
+            //             statusCode: 400,
+            //             code: "auth/account-exists"
+            //         })
+            //     }
+            //     return res.send({
+            //         message: "phone number already exists",
+            //         statusCode: 400,
+            //         code: "auth/phone-exists"
+            //     });
+            // }
             // TODO create customer
             let cus = new CustomerModel.customerModel({
                 email: email,
@@ -84,7 +125,7 @@ class CustomerController {
                 created_time: dataTime,
             });
             // TODO send mail verify
-            const link = `http://${ipAddressLocal}:${portLocal}/customer/verify?type=${"register"}&key=${cus._id.toString()}`;
+            const link = `http://${ipAddressLocal}:${portLocal}/v1/api/customer/verify?type=${"register"}&key=${cus._id.toString()}`;
             const text = `STECH xin chào bạn\nẤn vào đây để xác thực tài khoản: ${link}`;
             let index = sendEmailVerifyCus(email, text);
             if (index === 0) {
@@ -97,14 +138,15 @@ class CustomerController {
                 await cus.save();
             }
             return res.send({
-                message: "please verify account",
+                message: "Register success!\nPlease verify your account in email.",
                 statusCode: 200,
                 code: "auth/verify"
             });
         } catch (e) {
             console.log(e.message);
             return res.send({
-                message: e.message.toString(), statusCode: 400,
+                message: e.message.toString(),
+                statusCode: 400,
                 code: `auth/${e.code}`
             });
         }

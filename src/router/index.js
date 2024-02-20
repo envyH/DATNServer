@@ -4,8 +4,8 @@ const route = express.Router();
 const categoryRouter = require('./category');
 const customerRouter = require('./customer');
 
-route.use('/category', categoryRouter);
-route.use('/customer', customerRouter);
+route.use('/v1/api/category', categoryRouter);
+route.use('/v1/api/customer', customerRouter);
 
 route.get('/', (req, res, next) => {
     const strCompress = "Hello world";
