@@ -8,6 +8,7 @@ const { default: helmet } = require('helmet');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const cookieParser = require("cookie-parser");
+const session = require('express-session');
 const cors = require('cors');
 const http = require('http');
 const server = http.createServer(app);
@@ -25,6 +26,8 @@ if (admin.apps.length === 0) {
     });
 }
 
+const sessionConfig = require('./src/configs/session.config');
+
 // view engine setup
 app.set("views", path.join(__dirname, "/src/views"));
 app.set("view engine", "pug");
@@ -38,6 +41,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "/src/public")));
+app.use(session(sessionConfig));
 
 
 process.on('warning', (warning) => {
@@ -49,6 +53,7 @@ const db = require('./src/configs/mongoose/config');
 
 // init route
 app.use('/', require('./src/router'));
+app.use('/v1/api/', require('./src/router/api'));
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

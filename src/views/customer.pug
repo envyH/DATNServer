@@ -1,0 +1,272 @@
+extends layout
+
+block content
+    link(rel='stylesheet' href='https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css')
+    link(rel='stylesheet' href='/css/user.css')
+    #main-wrapper.page-wrapper(data-layout='vertical' data-navbarbg='skin6' data-sidebartype='full' data-sidebar-position='fixed' data-header-position='fixed')
+        // Sidebar Start
+        aside.left-sidebar
+            // Sidebar scroll
+            div
+                .brand-logo.d-flex.align-items-center.justify-content-between
+                    a.text-nowrap.logo-img(href='/home')
+                        img(src='/images/logo.jpeg' width='180' alt='')
+                    #sidebarCollapse.close-btn.d-xl-none.d-block.sidebartoggler.cursor-pointer
+                        i.ti.ti-x.fs-8
+                // Sidebar navigation
+                nav.sidebar-nav.scroll-sidebar(data-simplebar='')
+                    ul#sidebarnav
+                        li.nav-small-cap
+                            i.ti.ti-dots.nav-small-cap-icon.fs-4
+                            span.hide-menu Home
+                        li.sidebar-item
+                            a.sidebar-link(href='/stech.manager/home' aria-expanded='false')
+                                span
+                                    i.ti.ti-layout-dashboard
+                                span.hide-menu Dashboard
+                        li.nav-small-cap
+                            i.ti.ti-dots.nav-small-cap-icon.fs-4
+                            span.hide-menu Manager
+                        li.sidebar-item
+                            a.sidebar-link(href='/stech.manager/product' aria-expanded='false')
+                                span
+                                    i.ti.ti-brand-producthunt
+                                span.hide-menu Product
+                        li.sidebar-item
+                            a.sidebar-link(href='/category' aria-expanded='false')
+                                span
+                                    i.ti.ti-category
+                                span.hide-menu Category
+                        li.sidebar-item
+                            a.sidebar-link(href='/stech.manager/cart' aria-expanded='false')
+                                span
+                                    i.ti.ti-shopping-cart
+                                span.hide-menu Cart
+                        li.sidebar-item
+                            a.sidebar-link(href='/stech.manager/chat' aria-expanded='false')
+                                span
+                                    i.ti.ti-message-chatbot
+                                span.hide-menu Chat
+                        li.sidebar-item
+                            a.sidebar-link(href='/stech.manager/notification' aria-expanded='false')
+                                span
+                                    i.ti.ti-notification
+                                span.hide-menu Notification
+                        li.sidebar-item
+                            a.sidebar-link(href='/stech.manager/customer' aria-expanded='false')
+                                span
+                                    i.ti.ti-cards
+                                span.hide-menu Customer
+                        li.sidebar-item
+                            a.sidebar-link(href='/stech.manager/order' aria-expanded='false')
+                                span
+                                    i.ti.ti-file-description
+                                span.hide-menu Order
+                        li.sidebar-item
+                            a.sidebar-link(href='/stech.manager/voucher' aria-expanded='false')
+                                span
+                                    i.ti.ti-file-description
+                                span.hide-menu Voucher
+                        li.sidebar-item
+                            a.sidebar-link(href='/stech.manager/banner' aria-expanded='false')
+                                span
+                                    i.ti.ti-file-import
+                                span.hide-menu Banner
+                        li.nav-small-cap
+                            i.ti.ti-dots.nav-small-cap-icon.fs-4
+                            span.hide-menu AUTH
+                        li.sidebar-item
+                            a.sidebar-link(href='/stech.manager/type_login' aria-expanded='false')
+                                span
+                                    i.ti.ti-login
+                                span.hide-menu Login
+                        li.sidebar-item
+                            a.sidebar-link(href='/stech.manager/register' aria-expanded='false')
+                                span
+                                    i.ti.ti-user-plus
+                                span.hide-menu Register
+                // End Sidebar navigation
+            // End Sidebar scroll
+        // Sidebar End
+        // Main wrapper
+        .body-wrapper
+            // Header Start
+            header.app-header
+                nav.navbar.navbar-expand-lg.navbar-light
+                    ul.navbar-nav
+                        li.nav-item.d-block.d-xl-none
+                            a#headerCollapse.nav-link.sidebartoggler.nav-icon-hover(href='javascript:void(0)')
+                                i.ti.ti-menu-2
+                    #navbarNav.navbar-collapse.justify-content-end.px-0
+                        form#searchForm(action='javascript:void(0)', onsubmit='return false;')
+                            .input-group.m-lg-auto
+                                input#searchInput.form-control(type='text', name='query', placeholder='Enter your search query...' oninput='searchUsers()')
+                                button#searchButton.btn.btn-outline-secondary(type='button') Search
+                        a#openUserModal.btn.btn-outline-primary.m-lg-2(data-bs-toggle='modal' data-bs-target='UserModal') Add Customer
+                        ul.pagination.m-lg-2
+                            li.page-item(style='margin-right: 10px')
+                                a.btn.btn-primary(class='statusButton') Customer
+                            li.page-item(style='margin-right: 10px')
+                                a.btn.btn-primary(class='statusButton' href='/stech.manager/employee') Employee
+                            li.page-item(style='margin-right: 10px' id = 'getAllOrder')
+                                a.btn.btn-primary( href='/stech.manager/ban' class='statusButton' data-status = 'All') Baned
+
+                        ul.navbar-nav.flex-row.ms-auto.align-items-center.justify-content-end
+                            li.nav-item.dropdown
+                                a#drop2.nav-link.nav-icon-hover(href='javascript:void(0)' data-bs-toggle='dropdown' aria-expanded='false')
+                                    img.rounded-circle(src='/images/logo.jpeg' alt='' width='35' height='35')
+                                .dropdown-menu.dropdown-menu-end.dropdown-menu-animate-up(aria-labelledby='drop2')
+                                    .message-body
+                                        a.d-flex.align-items-center.gap-2.dropdown-item(href='/stech.manager/profile')
+                                            i.ti.ti-user.fs-6
+                                            p.mb-0.fs-3 My Profile
+                                        a.d-flex.align-items-center.gap-2.dropdown-item(href='javascript:void(0)')
+                                            i.ti.ti-mail.fs-6
+                                            p.mb-0.fs-3 My Account
+                                        a.d-flex.align-items-center.gap-2.dropdown-item(href='javascript:void(0)')
+                                            i.ti.ti-list-check.fs-6
+                                            p.mb-0.fs-3 My Task
+                                        a#logout.btn.btn-outline-primary.mx-3.mt-2.d-block(href='/stech.manager/login') Logout
+            // Header End
+            .container-fluid
+                .col-md-12
+                    .user-dashboard-info-box.table-responsive.mb-0.bg-white.p-4.shadow-sm
+                        table.table.manage-candidates-top.mb-0
+                            thead
+                                tr
+                                    th.col-4 Candidate Name
+                                    th.text-center Status
+                                    th.text-start.col-1  Action
+                            tbody
+                                each customer in customers
+                                    tr.candidates-list
+                                        td.title
+                                            .thumb
+                                                img.img-fluid(src=customer.avatar, alt=customer.avatar)
+                                                a.bg-primary.rounded-circle.p-2.text-white.d-inline-flex.position-absolute.bottom-0.end-0.mb-n3.me-3(href='javascript:void(0)' id='addToCartButton' data-bs-toggle='modal' data-bs-target='#addToCartModal' data-bs-placement='top' data-bs-title='Add To Cart')
+                                            .candidate-list-details
+                                                .candidate-list-info
+                                                    .candidate-list-title
+                                                        h5.mb-0
+                                                            a(href='#')=customer.full_name
+                                                    .candidate-list-option
+                                                        ul.list-unstyled
+                                                            li(style="margin-right: 20px")
+                                                                i.fas.fa-envelope.pr-1
+                                                                    span.fas(style="margin-left: 5px; font-size: 15px; color: #2d2d2d;")= customer.email
+                                        td
+                                            p.text-muted.text-truncate.text-center
+                                                | #{customer.status}
+                                        td
+                                            ul.list-unstyled.mb-0.d-flex
+                                                li
+                                                    a.text-primary(href='#' class='chatUser' title='' data-id=customer._id)
+                                                        i.bx.bx-message-dots
+                                                li
+                                                    a.text-primary(class='EditCus' data-id=customer._id,data-email=customer.email,data-password=customer.password,data-name=customer.full_name,data-phone=customer.phone_number  data-bs-toggle="modal" data-bs-target="#UpdateCustomerModal")
+                                                        i.bx.bx-edit-alt(style='color:#6b7aec')
+                                                li
+                                                    a.text-danger(class="banCus" id="banCustomerBtn" data-id=customer._id  data-bs-toggle="modal" data-bs-target="#banCustomerModal")
+                                                        i.fa.fa-ban
+
+
+                .py-6.px-6.text-center
+                    p.mb-0.fs-4
+                        | Design and Developed by&nbsp;
+                        a.pe-1.text-primary.text-decoration-underline(href='https://trinh-dien-203.onrender.com' target='_blank') STECH
+                //Modal add pro duct
+
+            #banCustomerModal.modal(tabindex='-1')
+                .modal-dialog
+                    .modal-content
+                        .modal-header
+                            h5.modal-title Warning!
+                            button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                        .modal-body
+                            p Bạn có chắc chắn muốn chặn người dùng  này.
+                        .modal-footer
+                            form(action="/stech.manager/banCustomer" method="post")
+                                .mb-3.d-none
+                                    input#idCustomerBan.form-control(name='customerId', type='text', aria-describedby='textHelp')
+                                button.btn.btn-dark(type='button' data-bs-dismiss='modal') Quay lại
+                                button.btn.btn-danger(type='submit' id='banCustomer') Đồng ý
+
+            div#CustomerModal.modal.fade(tabindex="-1", role="dialog", aria-labelledby="userModalLabel", aria-hidden="true")
+                .modal-dialog
+                    form(method="post" action="/stech.manager/AddCustomer" enctype='multipart/form-data')
+                        .modal-content
+                            .modal-header
+                                h5.modal-title Thêm người dùng
+                                button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                            .modal-body
+                                .mb-3
+                                    label.form-label(for='email') Email
+                                    input#email.form-control(type='text' name="email" aria-describedby='textHelp')
+                                .mb-3
+                                    label.form-label(for='password') Password
+                                    input#password.form-control(type='text' name="password" aria-describedby='textHelp')
+                                .mb-3
+                                    label.form-label(for='full_name') Name
+                                    input#full_name.form-control(type='text' name="full_name"  aria-describedby='textHelp')
+                                .mb-3
+                                    label.form-label(for='phone_number') Phone
+                                    input#phone_number.form-control(type='text' name="phone_number" aria-describedby='textHelp')
+                                .mb-3
+                                    .form-group
+                                        label(for="avatar") Hình ảnh
+                                        input#avatar(type="file", name="avatar", accept="image/*")
+                                button.btn.btn-secondary(type="button", data-bs-dismiss="modal") Close
+                                button.btn.btn-primary#addEmployeeButton(type="submit") Add customer
+
+            div#UpdateCustomerModal.modal.fade
+                .modal-dialog
+                    form(method="post" action="/stech.manager/UpdateCustomer" enctype='multipart/form-data')
+                        .modal-content
+                            .modal-header
+                                h5.modal-title Sửa nhân viên
+                                button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                            .modal-body
+                                .mb-2.d-none
+                                    .form-group
+                                        label ID
+                                        input#idCusUp( type="text", name="idCustomer", class="form-control", placeholder="", aria-describedby="helpId" readonly)
+                                .mb-3
+                                    label.form-label(for='email') Email
+                                    input#emailUp.form-control(type='email' name="email" aria-describedby='textHelp' required)
+                                .mb-3
+                                    label.form-label(for='password') Password
+                                    input#passwordUp.form-control(type='text' name="password" aria-describedby='textHelp' required)
+                                .mb-3
+                                    label.form-label(for='full_name') Name
+                                    input#full_nameUp.form-control(type='text' name="full_name"  aria-describedby='textHelp' required)
+                                .mb-3
+                                    label.form-label(for='phone_number') Phone
+                                    input#phone_numberUp.form-control(type='text' name="phone_number" aria-describedby='textHelp' required)
+                                .mb-3
+                                    .form-group
+                                        label(for="avatar") Hình ảnh
+                                        input#avatarUp(type="file", name="avatar", accept="image/*")
+                                button.btn.btn-secondary(type="button", data-bs-dismiss="modal") Close
+                                button.btn.btn-primary#updateEmployeeButton(type="submit") Update Customer
+
+    script(src='/js/customer.js')
+    script.
+        function removeDiacritics(str) {
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
+        function searchUsers() {
+            const query = removeDiacritics(document.getElementById('searchInput').value.toLowerCase());
+            const candidateRows = document.querySelectorAll('.candidates-list');
+
+            candidateRows.forEach(function (row) {
+                const userFullName = removeDiacritics(row.querySelector('.candidate-list-title a').innerText.toLowerCase());
+                const userEmail = removeDiacritics(row.querySelector('.candidate-list-option span').innerText.toLowerCase());
+
+                // Nếu không có thông tin tìm kiếm hoặc tìm thấy kết quả, hiển thị lại dòng
+                if (!query || userFullName.includes(query) || userEmail.includes(query)) {
+                    row.style.display = 'table-row';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }

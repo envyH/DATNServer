@@ -1,3 +1,4 @@
+
 const moment = require('moment-timezone');
 
 const specificTimeZone = 'Asia/Ho_Chi_Minh';
@@ -6,8 +7,22 @@ const formatType = "YYYY-MM-DD-HH:mm:ss";
 const UploadFileFirebase = require('../services/uploadFileFirebase');
 const CategoryModel = require('../models/model.category');
 
+
 class CategoryController {
 
+    show = async (req, res) => {
+        try {
+            let listCategory = await CategoryModel.categoryModel.find().lean();
+            return res.render('category', {
+                terifyWith: "Admin",
+                category: listCategory
+            });
+        } catch (e) {
+            console.log(e.message);
+            return res.send({ message: "category not found", code: 0 });
+        }
+
+    }
     create = async (req, res) => {
         try {
             let date = new Date();
@@ -48,11 +63,6 @@ class CategoryController {
             console.log(e.message);
             return res.send({ message: "Error add category", code: 0 });
         }
-    }
-
-
-    show = (req, res) => {
-        return res.render('category')
     }
 
     edit = (req, res, next) => {

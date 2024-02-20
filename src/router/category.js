@@ -4,11 +4,10 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-const CategoryController = require('../controllers/category');
+const CategoryService = require('../services/category');
 
 
-router.get('/', CategoryController.show);
-router.post('/create', upload.single('image'), CategoryController.create);
+
 
 
 module.exports = router
