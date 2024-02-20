@@ -8,6 +8,8 @@ const CustomerController = require('../controllers/customer');
 
 router.get("/verify", CustomerController.verify);
 router.post('/register', CustomerController.register);
+router.post('/login', CustomerController.login);
+router.post('/login/verify', CustomerController.verifyLogin);
 
 
 module.exports = router
