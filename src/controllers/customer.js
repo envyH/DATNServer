@@ -6,8 +6,9 @@ class CustomerController {
         try {
             let listCus = await CustomerModel.customerModel.find({ status: { $ne: 'banned' } });
             // console.log(listCus);
-            return res.render('customer', {
+            return res.render('index', {
                 terifyWith: "Admin",
+                layout: "customer",
                 customers: listCus,
                 code: 1
             });
