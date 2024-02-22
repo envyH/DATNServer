@@ -424,7 +424,7 @@ class CustomerService {
             let customer = await CustomerModel.customerModel.findOne({ _id: customerID, otp: otp })
             if (customer) {
                 let token = jwt.sign({ customer: customer }, process.env.ACCESS_TOKEN_SECRET, {
-                    expiresIn: "1m",
+                    expiresIn: "2 days",
                 });
                 customer.otp = null;
                 await customer.save();

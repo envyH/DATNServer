@@ -13,7 +13,7 @@ class CategoryController {
     show = async (req, res) => {
         try {
             let listCategory = await CategoryModel.categoryModel.find().lean();
-            return res.render('index', {
+            return res.render('category', {
                 terifyWith: "Admin",
                 layout: "category",
                 category: listCategory
