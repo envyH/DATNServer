@@ -1,0 +1,89 @@
+extends layout
+
+block content
+    .container-fluid
+        .row
+            each banner in banners
+                .col-sm-6.col-xl-3
+                    .card.overflow-hidden.rounded-2
+                        .position-relative
+                            a(href='#')
+                                img.card-img-top.rounded-0(src=banner.img alt='...')
+                        .card-body.pt-3.p-4
+                            //h6.fw-semibold.fs-4= banner.img
+                            ul.navbar-nav.flex-row.ms-auto.align-items-center.justify-content-end
+                                li.nav-item.dropdown
+                                    //- .nav-link
+                                    a#drop2.nav-icon-hover(href='#' data-bs-toggle='dropdown' aria-expanded='false')
+                                        button.btn.btn-secondary(type='button') Tuỳ chọn
+                                        .dropdown-menu.dropdown-menu-end.dropdown-menu-animate-up(aria-labelledby='drop2')
+                                            .message-body
+                                                a.d-flex.align-items-center.gap-2.dropdown-item(class='DeleteBanner' data-id = banner._id data-bs-toggle="modal")
+                                                    i.ti.ti-trash.fs-6
+                                                    p.mb-0.fs-3 Xoá sản phẩm
+                                                a.btn.btn-outline-primary.mx-3.mt-2.d-block(href='' class="UpdateBanner" data-id=banner._id data-bs-toggle='modal') Updating..
+        //- Start Pagination
+        nav(aria-label='Page navigation example')
+            ul.pagination.justify-content-end
+                li.page-item.disabled
+                    a.page-link(href='#' tabindex='-1') Previous
+                li.page-item.active
+                    a.page-link(href='#') 1
+                li.page-item
+                    a.page-link(href='#') 2
+                li.page-item
+                    a.page-link(href='#') 3
+                li.page-item
+                    a.page-link(href='#') Next
+        //- End Pagination
+        
+    //Modal product
+    #CreBannerModal.modal.fade
+        .modal-dialog
+            .modal-content
+                .modal-header
+                    h5.modal-title C&#x1EAD;p nh&#x1EAD;t s&#x1EA3;n ph&#x1EA9;m
+                    button.btn-close(type='button', data-bs-dismiss='modal', aria-label='Close')
+                .modal-body
+                    form(action="/stech.manager/addBanner" method="post" enctype='multipart/form-data')
+                        .mb-3
+                            .form-group
+                                label(for='img') &#x1EA2;nh n&#x1EC1;n
+                                input#img(name='img' type='file', accept='image/*')
+
+                        .modal-footer
+                            button.btn.btn-dark(type='button', data-bs-dismiss='modal') Hủy
+                            button#ConfirmCreBanner.btn.btn-outline-dark-light(type='submit') Lưu ảnh
+    #UpBannerModal.modal.fade
+        .modal-dialog
+            .modal-content
+                .modal-header
+                    h5.modal-title C&#x1EAD;p nh&#x1EAD;t s&#x1EA3;n ph&#x1EA9;m
+                    button.btn-close(type='button', data-bs-dismiss='modal', aria-label='Close')
+                .modal-body
+                    form(action="/stech.manager/updateBanner" method="post" enctype='multipart/form-data')
+                        .mb-3.d-none
+                            label.form-label()
+                            input#idUpdate.form-control(name='bannerId', type='text', aria-describedby='textHelp')
+                        .mb-3
+                            .form-group
+                                label(for='img') &#x1EA2;nh n&#x1EC1;n
+                                input(name='img' type='file', accept='image/*')
+                        .modal-footer
+                            button.btn.btn-dark(type='button', data-bs-dismiss='modal') Hủy
+                            button.btn.btn-outline-dark-light(type='submit') Sửa ảnh
+    #DelBannerModal.modal(tabindex='-1')
+        .modal-dialog
+            .modal-content
+                .modal-header
+                    h5.modal-title Warning!
+                .modal-body
+                    p Bạn có chắc chắn muốn xóa?
+                    .modal-body
+                        form(action="/stech.manager/deleteBanner" method="post")
+                            .mb-3.d-none
+                                label.form-label
+                                input#idBannerDelete.form-control(name='bannerId', type='text', aria-describedby='textHelp')
+                            button.btn.btn-dark(type='button' data-bs-dismiss='modal') Quay lại
+                            button.ms-3.btn.btn-danger(type='submit') Đồng ý
+    script(src="/js/banner.js")

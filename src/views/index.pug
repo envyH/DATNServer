@@ -29,7 +29,7 @@ block content
                         li.sidebar-item
                             a.sidebar-link(href='/product' aria-expanded='false')
                                 span
-                                    i.ti.ti-brand-producthunt
+                                    i.ti.ti-package
                                 span.hide-menu Product
                         li.sidebar-item
                             a.sidebar-link(href='/category' aria-expanded='false')
@@ -54,12 +54,12 @@ block content
                         li.sidebar-item
                             a.sidebar-link(href='/customer' aria-expanded='false')
                                 span
-                                    i.ti.ti-cards
+                                    i.ti.ti-user-circle
                                 span.hide-menu Customer
                         li.sidebar-item
                             a.sidebar-link(href='/order' aria-expanded='false')
                                 span
-                                    i.ti.ti-file-description
+                                    i.ti.ti-cards
                                 span.hide-menu Order
                         li.sidebar-item
                             a.sidebar-link(href='/voucher' aria-expanded='false')
@@ -116,12 +116,23 @@ block content
             // Header End
         
             // Content file
-            |
             case layout
                 when "dashboard"
                     include dashboard.pug
+                    break
                 when "category"
                     include category.pug
+                    break
                 when "customer"
                     include customer.pug
+                    break
+                when "banner"
+                    include banner.pug
+                    break
+                
+            // Copyright
+            .py-6.px-6.text-center
+                p.mb-0.fs-4
+                    | Design and Developed by&nbsp;
+                    a.pe-1.text-primary.text-decoration-underline(href='https://trinh-dien-203.onrender.com' target='_blank') STECH
         

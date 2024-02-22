@@ -1,42 +1,156 @@
 extends layout
 
 block content
-    link(rel='stylesheet' href='https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css')
-    .container-fluid
-        form#searchForm(action='javascript:void(0)', onsubmit='return false;')
-            .input-group.m-3
-                input#searchInput.form-control(type='text', name='query', placeholder='Enter your search query...' oninput='searchCategory()')
-                button#searchButton.btn.btn-outline-secondary(type='button') Search
-        .row
-            //- Item Category
-            if category != null
-                each cate in category
-                    .col-sm-6.col-xl-3
-                        .card.overflow-hidden.rounded-2
-                            .position-relative
-                                a(href='#')
-                                    img.card-img-top.rounded-0(src=cate.image alt='...' style='max-width: 100%; height: 180px;')
-                                a.bg-primary.rounded-circle.p-2.text-white.d-inline-flex.position-absolute.bottom-0.end-0.mb-n3.me-3(href='javascript:void(0)' id='addToCartButton' data-bs-toggle='modal' data-bs-target='#addToCartModal' data-bs-placement='top' data-bs-title='Add To Cart')
-                                    i.ti.ti-basket.fs-4
-                            .card-body.pt-3.p-4
-                                h6.fw-semibold.fs-4= cate.name
-                                ul.navbar-nav.flex-row.ms-auto.align-items-center.justify-content-end
-                                    li.nav-item.dropdown
-                                        //- .nav-link
-                                        a#drop2.nav-icon-hover(href='#' data-bs-toggle='dropdown' aria-expanded='false')
-                                            button.btn.btn-secondary(type='button') Tuỳ chọn
-                                            .dropdown-menu.dropdown-menu-end.dropdown-menu-animate-up(aria-labelledby='drop2')
-                                                .message-body
-                                                    a.d-flex.align-items-center.gap-2.dropdown-item(href='javascript:void(0)')
-                                                        i.ti.ti-eye-off.fs-6
-                                                        p.mb-0.fs-3 Ẩn khỏi app
-                                                    a.d-flex.align-items-center.gap-2.dropdown-item(href='javascript:void(0)')
-                                                        i.ti.ti-edit.fs-6
-                                                        p.mb-0.fs-3(class="updateCate" data-id=cate._id  data-bs-toggle="modal" data-bs-target="#updateCategoryModal") Sửa thông tin
-                                                    //a.d-flex.align-items-center.gap-2.dropdown-item(href='javascript:void(0)')
-                                                    //    i.ti.ti-trash.fs-6
-                                                    //    p.mb-0.fs-3(class='deleteCate' data-id=cate._id data-name=cate.name data-bs-toggle="modal" data-bs-target="#confirmDeleteCate") Xoá thể loại
-                                                    //a.btn.btn-outline-primary.mx-3.mt-2.d-block Updating..
+    //- link(rel='stylesheet', href='/css/table.css')
+    #main-wrapper.page-wrapper(data-layout='vertical' data-navbarbg='skin6' data-sidebartype='full' data-sidebar-position='fixed' data-header-position='fixed')
+        // Sidebar Start
+        aside.left-sidebar
+            // Sidebar scroll
+            div
+                .brand-logo.d-flex.align-items-center.justify-content-between
+                    a.text-nowrap.logo-img(href='/home')
+                        img(src='/images/logo.jpeg' width='180' alt='')
+                    #sidebarCollapse.close-btn.d-xl-none.d-block.sidebartoggler.cursor-pointer
+                        i.ti.ti-x.fs-8
+                // Sidebar navigation
+                nav.sidebar-nav.scroll-sidebar(data-simplebar='')
+                    ul#sidebarnav
+                        li.nav-small-cap
+                            i.ti.ti-dots.nav-small-cap-icon.fs-4
+                            span.hide-menu Home
+                        li.sidebar-item
+                            a.sidebar-link(href='/home' aria-expanded='true')
+                                span
+                                    i.ti.ti-layout-dashboard
+                                span.hide-menu Dashboard
+                        li.nav-small-cap
+                            i.ti.ti-dots.nav-small-cap-icon.fs-4
+                            span.hide-menu Manager
+                        li.sidebar-item
+                            a.sidebar-link(href='/product' aria-expanded='false')
+                                span
+                                    i.ti.ti-package
+                                span.hide-menu Product
+                        li.sidebar-item
+                            a.sidebar-link(href='/category' aria-expanded='false')
+                                span
+                                    i.ti.ti-category
+                                span.hide-menu Category
+                        li.sidebar-item
+                            a.sidebar-link(href='/cart' aria-expanded='false')
+                                span
+                                    i.ti.ti-shopping-cart
+                                span.hide-menu Cart
+                        li.sidebar-item
+                            a.sidebar-link(href='/chat' aria-expanded='false')
+                                span
+                                    i.ti.ti-message-chatbot
+                                span.hide-menu Chat
+                        li.sidebar-item
+                            a.sidebar-link(href='/notification' aria-expanded='false')
+                                span
+                                    i.ti.ti-notification
+                                span.hide-menu Notification
+                        li.sidebar-item
+                            a.sidebar-link(href='/customer' aria-expanded='false')
+                                span
+                                    i.ti.ti-user-circle
+                                span.hide-menu Customer
+                        li.sidebar-item
+                            a.sidebar-link(href='/order' aria-expanded='false')
+                                span
+                                    i.ti.ti-cards
+                                span.hide-menu Order
+                        li.sidebar-item
+                            a.sidebar-link(href='/voucher' aria-expanded='false')
+                                span
+                                    i.ti.ti-file-description
+                                span.hide-menu Voucher
+                        li.sidebar-item
+                            a.sidebar-link(href='/banner' aria-expanded='false')
+                                span
+                                    i.ti.ti-file-import
+                                span.hide-menu Banner
+                        li.nav-small-cap
+                            i.ti.ti-dots.nav-small-cap-icon.fs-4
+                            span.hide-menu AUTH
+                        li.sidebar-item
+                            a.sidebar-link(href='/type_login' aria-expanded='false')
+                                span
+                                    i.ti.ti-login
+                                span.hide-menu Login
+                        li.sidebar-item
+                            a.sidebar-link(href='/register' aria-expanded='false')
+                                span
+                                    i.ti.ti-user-plus
+                                span.hide-menu Register
+                // End Sidebar navigation
+            // End Sidebar scroll
+        // Sidebar End
+        // Main wrapper
+        .body-wrapper
+            // Header Start
+            header.app-header
+                nav.navbar.navbar-expand-lg.navbar-light
+                    ul.navbar-nav
+                        li.nav-item.d-block.d-xl-none
+                            a#headerCollapse.nav-link.sidebartoggler.nav-icon-hover(href='javascript:void(0)')
+                                i.ti.ti-menu-2
+                    #navbarNav.navbar-collapse.justify-content-end.px-0
+                        ul.navbar-nav.flex-row.ms-auto.align-items-center.justify-content-end
+                            a.btn.btn-outline-primary.mx-3.mt-2.d-block(data-bs-toggle="modal" data-bs-target="#addCategoryModal") Thêm thể loại
+                            li.nav-item.dropdown
+                                a#drop2.nav-link.nav-icon-hover(href='javascript:void(0)' data-bs-toggle='dropdown' aria-expanded='false')
+                                    img.rounded-circle(src='/images/logo.jpeg' alt='' width='35' height='35')
+                                .dropdown-menu.dropdown-menu-end.dropdown-menu-animate-up(aria-labelledby='drop2')
+                                    .message-body
+                                        a.d-flex.align-items-center.gap-2.dropdown-item(href='/profile')
+                                            i.ti.ti-user.fs-6
+                                            p.mb-0.fs-3 My Profile
+                                        a.d-flex.align-items-center.gap-2.dropdown-item(href='')
+                                            i.ti.ti-mail.fs-6
+                                            p.mb-0.fs-3 My Account
+                                        a.d-flex.align-items-center.gap-2.dropdown-item(href='javascript:void(0)')
+                                            i.ti.ti-list-check.fs-6
+                                            p.mb-0.fs-3 My Task
+                                        a#logout.btn.btn-outline-primary.mx-3.mt-2.d-block(href='/login') Logout
+            // Header End
+
+            .container-fluid
+                form#searchForm(action='javascript:void(0)', onsubmit='return false;')
+                    .input-group.m-3
+                        input#searchInput.form-control(type='text', name='query', placeholder='Enter your search query...' oninput='searchCategory()')
+                        button#searchButton.btn.btn-outline-secondary(type='button') Search
+                .row
+                    //- Item Category
+                    if category != null
+                        each cate in category
+                            .col-sm-6.col-xl-3
+                                .card.overflow-hidden.rounded-2
+                                    .position-relative
+                                        a(href='#')
+                                            img.card-img-top.rounded-0(src=cate.image alt='...' style='max-width: 100%; height: 180px;')
+                                        a.bg-primary.rounded-circle.p-2.text-white.d-inline-flex.position-absolute.bottom-0.end-0.mb-n3.me-3(href='javascript:void(0)' id='addToCartButton' data-bs-toggle='modal' data-bs-target='#addToCartModal' data-bs-placement='top' data-bs-title='Add To Cart')
+                                            i.ti.ti-basket.fs-4
+                                    .card-body.pt-3.p-4
+                                        h6.fw-semibold.fs-4= cate.name
+                                        ul.navbar-nav.flex-row.ms-auto.align-items-center.justify-content-end
+                                            li.nav-item.dropdown
+                                                //- .nav-link
+                                                a#drop2.nav-icon-hover(href='#' data-bs-toggle='dropdown' aria-expanded='false')
+                                                    button.btn.btn-secondary(type='button') Tuỳ chọn
+                                                    .dropdown-menu.dropdown-menu-end.dropdown-menu-animate-up(aria-labelledby='drop2')
+                                                        .message-body
+                                                            a.d-flex.align-items-center.gap-2.dropdown-item(href='javascript:void(0)')
+                                                                i.ti.ti-eye-off.fs-6
+                                                                p.mb-0.fs-3 Ẩn khỏi app
+                                                            a.d-flex.align-items-center.gap-2.dropdown-item(href='javascript:void(0)')
+                                                                i.ti.ti-edit.fs-6
+                                                                p.mb-0.fs-3(class="updateCate" data-id=cate._id  data-bs-toggle="modal" data-bs-target="#updateCategoryModal") Sửa thông tin
+                                                            //a.d-flex.align-items-center.gap-2.dropdown-item(href='javascript:void(0)')
+                                                            //    i.ti.ti-trash.fs-6
+                                                            //    p.mb-0.fs-3(class='deleteCate' data-id=cate._id data-name=cate.name data-bs-toggle="modal" data-bs-target="#confirmDeleteCate") Xoá thể loại
+                                                            //a.btn.btn-outline-primary.mx-3.mt-2.d-block Updating..
         //- Start Pagination
         nav(aria-label='Page navigation example')
             ul.pagination.justify-content-end
@@ -51,11 +165,6 @@ block content
                 li.page-item
                     a.page-link(href='#') Next
         //- End Pagination
-
-        .py-6.px-6.text-center
-            p.mb-0.fs-4
-                | Design and Developed by&nbsp;
-                a.pe-1.text-primary.text-decoration-underline(href='https://trinh-dien-203.onrender.com' target='_blank') STECH
 
     //- Modal Add Category
     div#addCategoryModal.modal.fade
