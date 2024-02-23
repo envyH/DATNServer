@@ -14,7 +14,7 @@ const customerSchema = mongoose.Schema(
         fcm: { type: String, required: false },
         new_pass: { type: String, required: false },
         link_reset_pass: { type: String, required: false },
-        created_time: { type: String, required: true },
+        created_at: { type: String, required: true },
     },
     {
         collection: "Customers",
