@@ -69,6 +69,36 @@ class CartService {
             });
         }
     }
+
+    getByCustomerID = async (req, res) => {
+        const customerID = req.body.customerID;
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+        if (customerID === undefined || customerID.trim().length == 0) {
+            return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
+        }
+        try {
+            let cart = await CartModel.cartModel.find({ customer_id: customerID }).lean();
+            // console.log(cart);
+            return res.send({
+                message: "get data cart success",
+                statusCode: 200,
+                carts: cart,
+                code: "cart/getbycustomerid-success",
+                timestamp
+            });
+        } catch (e) {
+            console.log(e.message);
+            return res.send({
+                message: e.message.toString(),
+                statusCode: 400,
+                code: "cart/getbycustomerid-failed",
+                timestamp
+            });
+        }
+
+    }
 }
 
 module.exports = new CartService;

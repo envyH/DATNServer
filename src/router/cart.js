@@ -7,10 +7,8 @@ const { checkPermission } = require('../middlewares/middleware');
 const CartService = require('../services/cart');
 
 
-router.post("/add",
-    checkPermission,
-    CartService.addToCart
-);
+router.post("/add", checkPermission, CartService.addToCart);
+router.post("/get/customer", checkPermission, CartService.getByCustomerID);
 
 
 module.exports = router
