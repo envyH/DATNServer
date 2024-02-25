@@ -423,6 +423,13 @@ class CustomerService {
         try {
             let customer = await CustomerModel.customerModel.findOne({ _id: customerID, otp: otp })
             if (customer) {
+                // ms('2 days')  // 172800000
+                // ms('1d')      // 86400000
+                // ms('10h')     // 36000000
+                // ms('2.5 hrs') // 9000000
+                // ms('2h')      // 7200000
+                // ms('1m')      // 60000
+                // ms('5s')      // 5000
                 let token = jwt.sign({ customer: customer }, process.env.ACCESS_TOKEN_SECRET, {
                     expiresIn: "2 days",
                 });

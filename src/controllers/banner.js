@@ -6,7 +6,7 @@ class BannerController {
                 banners: []
             });
         } catch (e) {
-            console.log(e.message);
+            console.log("BannerController: ", e.message);
             return res.send({ message: "Error getting customers", code: 0 });
         }
 

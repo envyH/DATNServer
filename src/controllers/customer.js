@@ -13,7 +13,7 @@ class CustomerController {
                 code: 1
             });
         } catch (e) {
-            console.log(e.message);
+            console.log("CustomerController: ", e.message);
             return res.send({ message: "Error getting customers", code: 0 });
         }
 

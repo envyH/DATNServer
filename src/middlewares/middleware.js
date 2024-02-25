@@ -1,9 +1,21 @@
-const jwt = require("jsonwebtoken");
 require("dotenv").config();
-exports.checkPermission = (req,res,next)=>{
+const jwt = require("jsonwebtoken");
+const moment = require('moment-timezone');
+const specificTimeZone = 'Asia/Ho_Chi_Minh';
+const formatType = "YYYY-MM-DD-HH:mm:ss";
+
+
+exports.checkPermission = (req, res, next) => {
+    let date = new Date();
+    let timestamp = moment(date).tz(specificTimeZone).format(formatType);
     const token = req.header('Authorization');
     if (!token) {
-        return res.send({message: "wrong token", code: 0});
+        return res.send({
+            message: "wrong token",
+            statusCode: 400,
+            code: "auth/wrong-token",
+            timestamp
+        });
     }
     try {
         let data = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
@@ -12,6 +24,12 @@ exports.checkPermission = (req,res,next)=>{
             next();
         }
     } catch (e) {
-        return res.send({message: "wrong token", code: 0});
+        console.log("middleware: ", e.message.toString(),);
+        return res.send({
+            message: "wrong token",
+            statusCode: 400,
+            code: "auth/wrong-token",
+            timestamp
+        });
     }
 }

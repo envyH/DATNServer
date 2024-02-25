@@ -19,7 +19,7 @@ class CategoryController {
                 category: listCategory
             });
         } catch (e) {
-            console.log(e.message);
+            console.log("CategoryController: " ,e.message);
             return res.send({ message: "category not found", code: 0 });
         }
 
@@ -61,7 +61,7 @@ class CategoryController {
             return res.redirect("/category")
 
         } catch (e) {
-            console.log(e.message);
+            console.log("CategoryController: ", e.message);
             return res.send({ message: "Error add category", code: 0 });
         }
     }
