@@ -10,6 +10,7 @@ const CartService = require('../services/cart');
 router.post("/add", checkPermission, CartService.addToCart);
 router.post("/get/customer", checkPermission, CartService.getByCustomerID);
 router.post("/update/quantity", checkPermission, CartService.updateQuanity);
+router.post("/update/status", checkPermission, CartService.updateStatus);
 
 
 module.exports = router

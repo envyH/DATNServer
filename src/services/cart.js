@@ -7,6 +7,34 @@ const UploadFileFirebase = require('../services/uploadFileFirebase');
 const CartModel = require('../models/model.cart');
 const ProductModel = require('../models/model.product');
 
+
+const STATUS_CART = {
+    DEFAULT: { value: 0 },
+    SELECTED: { value: 1 },
+    BUYING: { value: 2 }
+};
+
+Object.keys(STATUS_CART).forEach(key => {
+    const status = STATUS_CART[key];
+    Object.defineProperty(status, 'getValue', {
+        value: function () {
+            return this.value;
+        },
+        enumerable: false
+    });
+});
+
+const checkStatusInCart = (value) => {
+    for (let key in STATUS_CART) {
+        if (STATUS_CART[key].value === value) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+
 async function getProductCart(customerID) {
     let carts = await CartModel.cartModel.find({ customer_id: customerID }).lean();
     let dataProduct = [];
@@ -237,6 +265,67 @@ class CartService {
                 message: e.message.toString(),
                 statusCode: 400,
                 code: "cart/update-quantity-failed",
+                timestamp
+            });
+        }
+    }
+    updateStatus = async (req, res) => {
+        let cartID = req.body.cartID;
+        let customerID = req.body.customerID;
+        let status = req.body.status;
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+        if (customerID === undefined || customerID.trim().length == 0) {
+            return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
+        }
+        if (cartID === undefined || cartID.trim().length == 0) {
+            return res.send({ message: "missing cartID", statusCode: 400, code: "cart/missing-cartid", timestamp });
+        }
+        if (status === undefined) {
+            return res.send({ message: "missing status", statusCode: 400, code: "cart/missing-status", timestamp });
+        }
+
+        let cartSelected = await CartModel.cartModel.findById(cartID).lean();
+        let statusValue = parseInt(status);
+        if (typeof statusValue !== 'number') {
+            return res.send({
+                message: "status invalid type",
+                statusCode: 400,
+                productCarts: [],
+                code: "cart/update-status-failed:" + cartSelected.status,
+                // code: "cart/status-invalid-type",
+                timestamp
+            });
+        }
+
+        
+        let isValidStatus = checkStatusInCart(statusValue);
+        if (!isValidStatus) {
+            return res.send({
+                message: "status invalid value",
+                statusCode: 400,
+                productCarts: [],
+                code: "cart/update-status-failed:" + cartSelected.status,
+                // code: "cart/status-invalid-value",
+                timestamp
+            });
+        }
+
+        try {
+            await CartModel.cartModel.findByIdAndUpdate(cartID, { status: statusValue });
+            return res.send({
+                message: "update status cart success",
+                statusCode: 200,
+                code: "cart/update-status-success:" + statusValue,
+                timestamp
+            });
+        } catch (e) {
+            console.log(e.message);
+            return res.send({
+                message: e.message.toString(),
+                statusCode: 400,
+                code: "cart/update-status-failed",
                 timestamp
             });
         }

@@ -5,7 +5,7 @@ const cartSchema = mongoose.Schema(
     customer_id: { type: mongoose.Schema.Types.ObjectId, ref: "customers", required: true, },
     product_id: { type: mongoose.Schema.Types.ObjectId, ref: "products", required: true, },
     quantity: { type: String, required: true },
-    status: { type: Number, required: true, default: 1 },
+    status: { type: Number, required: true, default: 0 },
     note: { type: String, required: false },
     created_at: { type: String, required: true },
   },
