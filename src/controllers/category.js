@@ -27,7 +27,7 @@ class CategoryController {
     create = async (req, res) => {
         try {
             let date = new Date();
-            let dataTime = moment(date).tz(specificTimeZone).format(formatType);
+            let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
             const name = req.body.name;
             if (!req.file) {
@@ -44,7 +44,7 @@ class CategoryController {
 
             let category = new CategoryModel.categoryModel({
                 name,
-                created_time: dataTime,
+                created_at: timestamp,
             });
             // console.log(fileimg);
             let img = await UploadFileFirebase.uploadFileToFBStorage(

@@ -28,14 +28,31 @@ async function getProductCart(customerID) {
     );
     let mData = [];
     for (let cart of carts) {
-        // console.log(cart._id.toString());
         let productInfo = dataProduct.find(product => product._id.toString() === cart.product_id.toString());
+        let quantityCart = cart.quantity;
+        // TODO auto update when error
+        // console.log(quantityCart);
+        // console.log(productInfo.quantity);
+        // if (quantityCart >= productInfo.quantity) {
+        //     quantityCart = productInfo.quantity;
+        //     try {
+        //         await CartModel.cartModel.findByIdAndUpdate(cart._id, { quantity: quantityCart.toString() });
+        //     } catch (e) {
+        //         console.log(e.message);
+        //         return res.send({
+        //             message: e.message.toString(),
+        //             statusCode: 400,
+        //             code: "cart/auto-update-quanity-failed",
+        //             timestamp
+        //         });
+        //     }
+        // }
         let dataResponse = {
             _id: cart._id,
             name: productInfo.name,
             image: productInfo.img_cover,
             quantity_product: productInfo.quantity,
-            quantity_cart: cart.quantity,
+            quantity_cart: quantityCart,
             price: productInfo.price,
             note: cart.note,
             status_cart: cart.status,
@@ -162,27 +179,54 @@ class CartService {
         if (type === undefined || type.trim().length == 0) {
             return res.send({ message: "missing type", statusCode: 400, code: "cart/missing-type", timestamp });
         }
-        if (mQuantity === undefined || parseInt(mQuantity) == 0) {
+        if (mQuantity === undefined || parseInt(mQuantity) <= 0) {
             return res.send({ message: "missing quantity", statusCode: 400, code: "cart/missing-quantity", timestamp });
+        }
+        let quantityValue = parseInt(mQuantity);
+        if (typeof quantityValue !== 'number') {
+            return res.send({
+                message: "quantity not a number",
+                statusCode: 400,
+                productCarts: [],
+                code: "cart/quantity-nan",
+                timestamp
+            });
         }
 
         try {
             let cartSelected = await CartModel.cartModel.findById(cartID).lean();
+            let dataProduct = await ProductModel.productModel.findById(cartSelected.product_id);
             if (cartSelected) {
                 let newQuantity = parseInt(cartSelected.quantity);
                 if (type === "plus") {
-                    newQuantity += parseInt(mQuantity);
-                } else if (type === "minus") {
-                    if (newQuantity > parseInt(mQuantity)) {
-                        newQuantity -= parseInt(mQuantity);
+                    if (newQuantity + quantityValue <= parseInt(dataProduct.quantity)) {
+                        newQuantity += quantityValue;
+                    } else {
+                        return res.send({
+                            message: "plus not change",
+                            statusCode: 400,
+                            code: "cart/plus-not-change",
+                            timestamp
+                        });
+                    }
+                } else {
+                    if (newQuantity > quantityValue) {
+                        newQuantity -= quantityValue;
+                    } else {
+                        return res.send({
+                            message: "minus not change",
+                            statusCode: 400,
+                            code: "cart/minus-not-change",
+                            timestamp
+                        });
                     }
                 }
                 await CartModel.cartModel.findByIdAndUpdate(cartID, { quantity: newQuantity.toString() });
-                let mData = await getProductCart(customerID);
                 return res.send({
                     message: "update quantity success",
                     statusCode: 200,
-                    productCarts: mData,
+                    productCarts: [],
+                    quantity: newQuantity,
                     code: "cart/update-quantity-success",
                     timestamp
                 });

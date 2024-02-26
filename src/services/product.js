@@ -18,7 +18,6 @@ class ProductService {
         }
 
         try {
-
             let product = await ProductModel.productModel.find().lean();
             return res.send({
                 message: "get list product success",
@@ -58,7 +57,7 @@ class ProductService {
             return res.send({
                 message: "get detail product success",
                 statusCode: 200,
-                code: "product/get-success",
+                code: "product/get-detail-success",
                 products: data,
                 timestamp
             });
@@ -67,7 +66,40 @@ class ProductService {
             return res.send({
                 message: e.message.toString(),
                 statusCode: 400,
-                code: "product/get-failed",
+                code: "product/get-detail-failed",
+                timestamp
+            });
+        }
+    }
+
+    getListByCateID = async (req, res) => {
+        const customerID = req.body.customerID;
+        const categoryID = req.body.categoryID;
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+        if (customerID === undefined || customerID.trim().length == 0) {
+            return res.send({ message: "Missing customerID", statusCode: 400, code: "auth/missing-customerid", timestamp });
+        }
+        if (categoryID === undefined || categoryID.trim().length == 0) {
+            return res.send({ message: "Missing categoryID", statusCode: 400, code: "auth/missing-categorytid", timestamp });
+        }
+
+        try {
+            let product = await ProductModel.productModel.find({ category_id: categoryID }).lean();
+            return res.send({
+                message: "get list product success",
+                statusCode: 200,
+                code: "product/get-list-success",
+                products: product,
+                timestamp
+            });
+        } catch (e) {
+            console.log(e.message);
+            return res.send({
+                message: e.message.toString(),
+                statusCode: 400,
+                code: "product/get-by-cateid-failed",
                 timestamp
             });
         }

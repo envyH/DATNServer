@@ -133,7 +133,7 @@ class CustomerService {
                 password: passwordHash,
                 full_name: fullName,
                 phone_number: phoneNumber,
-                created_time: timestamp,
+                created_at: timestamp,
             });
             // TODO send mail verify
             const link = `http://${ipAddressLocal}:${portLocal}/v1/api/customer/verify?type=${"register"}&key=${cus._id.toString()}`;
