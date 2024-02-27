@@ -11,6 +11,7 @@ router.post("/add", checkPermission, CartService.addToCart);
 router.post("/get/customer", checkPermission, CartService.getByCustomerID);
 router.post("/update/quantity", checkPermission, CartService.updateQuanity);
 router.post("/update/status", checkPermission, CartService.updateStatus);
+router.post("/update/status-all", checkPermission, CartService.updateStatusAll);
 
 
 module.exports = router

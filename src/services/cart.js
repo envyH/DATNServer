@@ -77,6 +77,7 @@ async function getProductCart(customerID) {
         // }
         let dataResponse = {
             _id: cart._id,
+            product_id: productInfo._id,
             name: productInfo.name,
             image: productInfo.img_cover,
             quantity_product: productInfo.quantity,
@@ -286,38 +287,34 @@ class CartService {
             return res.send({ message: "missing status", statusCode: 400, code: "cart/missing-status", timestamp });
         }
 
-        let cartSelected = await CartModel.cartModel.findById(cartID).lean();
         let statusValue = parseInt(status);
         if (typeof statusValue !== 'number') {
             return res.send({
                 message: "status invalid type",
                 statusCode: 400,
-                productCarts: [],
-                code: "cart/update-status-failed:" + cartSelected.status,
-                // code: "cart/status-invalid-type",
+                code: "cart/status-invalid-type",
                 timestamp
             });
         }
 
-        
         let isValidStatus = checkStatusInCart(statusValue);
         if (!isValidStatus) {
             return res.send({
                 message: "status invalid value",
                 statusCode: 400,
-                productCarts: [],
-                code: "cart/update-status-failed:" + cartSelected.status,
-                // code: "cart/status-invalid-value",
+                code: "cart/status-invalid-value",
                 timestamp
             });
         }
 
         try {
             await CartModel.cartModel.findByIdAndUpdate(cartID, { status: statusValue });
+            let mData = await getProductCart(customerID);
             return res.send({
                 message: "update status cart success",
                 statusCode: 200,
-                code: "cart/update-status-success:" + statusValue,
+                productCarts: mData,
+                code: "cart/update-status-success",
                 timestamp
             });
         } catch (e) {
@@ -330,6 +327,58 @@ class CartService {
             });
         }
     }
+
+    updateStatusAll = async (req, res) => {
+        let customerID = req.body.customerID;
+        let isSelected = req.body.isSelected;
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+        if (customerID === undefined || customerID.trim().length == 0) {
+            return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
+        }
+        if (isSelected === undefined || isSelected.trim().length == 0) {
+            return res.send({ message: "missing isSelected", statusCode: 400, code: "cart/missing-isSelected", timestamp });
+        }
+
+        if (isSelected !== 'true' && isSelected !== 'false') {
+            return res.send({
+                message: "isSelected invalid type",
+                statusCode: 400,
+                code: "cart/update-status-all-failed",
+                timestamp
+            });
+        }
+        try {
+            if (isSelected === 'true') {
+                let dataCart = await CartModel.cartModel.updateMany({ customer_id: customerID }, { status: STATUS_CART.SELECTED.value });
+                // console.log(dataCart.matchedCount);
+                // console.log(dataCart.modifiedCount);
+            } else {
+                let dataCart = await CartModel.cartModel.updateMany({ customer_id: customerID }, { status: STATUS_CART.DEFAULT.value });
+                // console.log(dataCart.matchedCount);
+                // console.log(dataCart.modifiedCount);
+            }
+            let mData = await getProductCart(customerID);
+            return res.send({
+                message: "update all status cart success",
+                statusCode: 200,
+                productCarts: mData,
+                code: "cart/update-all-status-success",
+                timestamp
+            });
+        } catch (e) {
+            console.log(e.message);
+            return res.send({
+                message: e.message.toString(),
+                statusCode: 400,
+                code: "cart/update-status-all-failed",
+                timestamp
+            });
+        }
+    }
+
+
 }
 
 module.exports = new CartService;
