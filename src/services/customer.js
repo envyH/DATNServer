@@ -26,7 +26,7 @@ class CustomerService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        let ipAddress = process.env.IP_ADDRESS;
+        const URL = process.env.URL;
         let ipAddressLocal = process.env.IP_LOCAL;
         let portLocal = process.env.PORT;
 
@@ -77,7 +77,8 @@ class CustomerService {
             }
             if (cusByEmail) {
                 if (cusByEmail.status === "Not verified") {
-                    const link = `http://${ipAddressLocal}:${portLocal}/v1/api/customer/verify?type=${"register"}&key=${cusByEmail._id.toString()}`;
+                    // const link = `http://${ipAddressLocal}:${portLocal}/v1/api/customer/verify?type=${"register"}&key=${cusByEmail._id.toString()}`;
+                    const link = `${URL}/v1/api/customer/verify?type=${"register"}&key=${cusByEmail._id.toString()}`;
                     const text = `STECH xin chào bạn\nẤn vào đây để xác thực tài khoản: ${link}`;
                     let index = sendEmailVerifyCus(email, text);
                     if (index === 0) {
@@ -136,7 +137,8 @@ class CustomerService {
                 created_at: timestamp,
             });
             // TODO send mail verify
-            const link = `http://${ipAddressLocal}:${portLocal}/v1/api/customer/verify?type=${"register"}&key=${cus._id.toString()}`;
+            // const link = `http://${ipAddressLocal}:${portLocal}/v1/api/customer/verify?type=${"register"}&key=${cus._id.toString()}`;
+            const link = `${URL}/v1/api/customer/verify?type=${"register"}&key=${cus._id.toString()}`;
             const text = `STECH xin chào bạn\nẤn vào đây để xác thực tài khoản: ${link}`;
             let index = sendEmailVerifyCus(email, text);
             if (index === 0) {

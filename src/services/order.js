@@ -4,15 +4,17 @@ const specificTimeZone = 'Asia/Ho_Chi_Minh';
 const formatType = "YYYY-MM-DD-HH:mm:ss";
 
 const UploadFileFirebase = require('../services/uploadFileFirebase');
-const CartModel = require('../models/model.cart');
 const ProductModel = require('../models/model.product');
+const CartModel = require('../models/model.cart');
+const OrderModel = require('../models/model.order');
 
+const { isNumber } = require('../utils/index');
 const { STATUS_CART } = require('../utils/cart');
-const { PAYMENT_METHOD } = require('../utils/payment');
+const { checkPaymentMethod, PAYMENT_METHOD } = require('../utils/payment');
 
 
 async function getProductCart(customerID) {
-    let carts = await CartModel.cartModel.find({ customer_id: customerID }).lean();
+    let carts = await CartModel.cartModel.find({ customer_id: customerID, status: 1 }).lean();
     let dataProduct = [];
     await Promise.all(
         carts.map(async (cart) => {
@@ -24,7 +26,7 @@ async function getProductCart(customerID) {
                 return res.send({
                     message: e.message.toString(),
                     statusCode: 400,
-                    code: "cart/getproductinfo-failed",
+                    code: "order/getproductinfo-failed",
                     timestamp
                 });
             }
@@ -54,24 +56,57 @@ async function getProductCart(customerID) {
     return mData;
 }
 
-class CheckoutService {
-    getProductCheckout = async (req, res) => {
+class OrderService {
+    getAmountZaloPay = async (req, res) => {
         const customerID = req.body.customerID;
+        const type = req.body.type;
+
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
         if (customerID === undefined || customerID.trim().length == 0) {
             return res.send({ message: "missing customerID", statusCode: 400, code: "checkout/missing-customerid", timestamp });
         }
+        if (type === undefined) {
+            return res.send({ message: "missing type", statusCode: 400, code: "cart/missing-type", timestamp });
+        }
+        let isNumberType = isNumber(type);
+        if (!isNumberType) {
+            return res.send({
+                message: "type not a number",
+                statusCode: 400,
+                productCarts: [],
+                code: "order/type-nan",
+                timestamp
+            });
+        }
+
+        let typeValue = parseInt(type)
+        let isValidType = checkPaymentMethod(typeValue);
+        if (!isValidType) {
+            return res.send({
+                message: "payment method invalid value",
+                statusCode: 400,
+                code: "order/payment-method-invalid-value",
+                timestamp
+            });
+        }
 
         try {
-            let mData = await getProductCart(customerID);
-            // console.log(mData);
+            let productOrders = await getProductCart(customerID);
+            let sum = 0;
+            await Promise.all(
+                productOrders.map(async (productOrder) => {
+                    let priceOne = productOrder.price;
+                    sum += priceOne * parseInt(productOrder.quantity_cart);
+                })
+            );
+
             return res.send({
-                message: "get product checkout success",
+                message: "create order success",
                 statusCode: 200,
-                productCarts: mData,
-                code: "checkout/get-productcheckout-success",
+                amount: sum,
+                code: "order/get-amount-zalopay-success",
                 timestamp
             });
         } catch (e) {
@@ -79,14 +114,15 @@ class CheckoutService {
             return res.send({
                 message: e.message.toString(),
                 statusCode: 400,
-                code: "checkout/get-productcheckout-failed",
+                code: "order/get-amount-zalopay-failed",
                 timestamp
             });
         }
     }
 
-    getPaymentMethod = async (req, res) => {
+    createOrderZaloPay = async (req, res) => {
         const customerID = req.body.customerID;
+
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
@@ -94,21 +130,18 @@ class CheckoutService {
             return res.send({ message: "missing customerID", statusCode: 400, code: "checkout/missing-customerid", timestamp });
         }
 
+
         try {
-            let paymentMethod = new Map();
-            paymentMethod.set(PAYMENT_METHOD.ON_DELIVERY.value, "Thanh toán khi nhận hàng");
-            paymentMethod.set(PAYMENT_METHOD.E_BANKING.value, "E-Banking");
-            paymentMethod.set(PAYMENT_METHOD.ZALO_PAY.value, "ZaloPay");
-            // console.log(paymentMethod.get(PAYMENT_METHOD.ON_DELIVERY.value));
-            let paymentMethodObject = {};
-            paymentMethod.forEach((value, key) => {
-                paymentMethodObject[key] = value;
+            let order = new OrderModel.orderModel({
+                customer_id: customerID,
+                payment_methods: PAYMENT_METHOD.ZALO_PAY.value,
+                created_at: timestamp,
             });
+            await order.save();
             return res.send({
-                message: "get payment method success",
+                message: "create order zalopay success",
                 statusCode: 200,
-                paymentMethod: paymentMethodObject,
-                code: "checkout/get-payment-method-success",
+                code: "order/create-order-zalopay-success",
                 timestamp
             });
         } catch (e) {
@@ -116,11 +149,13 @@ class CheckoutService {
             return res.send({
                 message: e.message.toString(),
                 statusCode: 400,
-                code: "checkout/get-payment-method-failed",
+                code: "order/create-order-zalopay-failed",
                 timestamp
             });
         }
     }
+
+
 }
 
-module.exports = new CheckoutService;
+module.exports = new OrderService;

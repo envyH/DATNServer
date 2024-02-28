@@ -7,33 +7,8 @@ const UploadFileFirebase = require('../services/uploadFileFirebase');
 const CartModel = require('../models/model.cart');
 const ProductModel = require('../models/model.product');
 
-
-const STATUS_CART = {
-    DEFAULT: { value: 0 },
-    SELECTED: { value: 1 },
-    BUYING: { value: 2 }
-};
-
-Object.keys(STATUS_CART).forEach(key => {
-    const status = STATUS_CART[key];
-    Object.defineProperty(status, 'getValue', {
-        value: function () {
-            return this.value;
-        },
-        enumerable: false
-    });
-});
-
-const checkStatusInCart = (value) => {
-    for (let key in STATUS_CART) {
-        if (STATUS_CART[key].value === value) {
-            return true;
-        }
-    }
-    return false;
-}
-
-
+const { STATUS_CART, checkStatusInCart } = require('../utils/cart');
+const { isNumber } = require('../utils/index');
 
 async function getProductCart(customerID) {
     let carts = await CartModel.cartModel.find({ customer_id: customerID }).lean();
@@ -211,8 +186,8 @@ class CartService {
         if (mQuantity === undefined || parseInt(mQuantity) <= 0) {
             return res.send({ message: "missing quantity", statusCode: 400, code: "cart/missing-quantity", timestamp });
         }
-        let quantityValue = parseInt(mQuantity);
-        if (typeof quantityValue !== 'number') {
+        let isNumberType = isNumber(mQuantity);
+        if (!isNumberType) {
             return res.send({
                 message: "quantity not a number",
                 statusCode: 400,
@@ -221,7 +196,7 @@ class CartService {
                 timestamp
             });
         }
-
+        let quantityValue = parseInt(mQuantity);
         try {
             let cartSelected = await CartModel.cartModel.findById(cartID).lean();
             let dataProduct = await ProductModel.productModel.findById(cartSelected.product_id);
@@ -251,11 +226,11 @@ class CartService {
                     }
                 }
                 await CartModel.cartModel.findByIdAndUpdate(cartID, { quantity: newQuantity.toString() });
+                let mData = await getProductCart(customerID);
                 return res.send({
                     message: "update quantity success",
                     statusCode: 200,
-                    productCarts: [],
-                    quantity: newQuantity,
+                    productCarts: mData,
                     code: "cart/update-quantity-success",
                     timestamp
                 });
