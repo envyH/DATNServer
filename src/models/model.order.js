@@ -7,7 +7,7 @@ const orderSchema = mongoose.Schema({
     employee_id: { type: mongoose.Schema.Types.ObjectId, ref: "employees", required: false, default: null },
     delivery_address_id: { type: mongoose.Schema.Types.ObjectId, ref: "delivery_address", required: false },
     status: { type: Number, required: true, default: STATUS_ORDER.WAITCONFIRM.value }, //WaitConfirm
-    amount: { type: String, required: true, default: "0" },
+    amount: { type: String, required: true },
     payment_methods: { type: Number, required: true, default: PAYMENT_METHOD.ON_DELIVERY.value }, // "Thanh Toán Khi Nhận Hàng"
     created_at: { type: String, required: true },
     guest_name: { type: String, required: false },

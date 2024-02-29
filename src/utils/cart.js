@@ -1,7 +1,8 @@
 const STATUS_CART = {
+    DELETED: { value: -1 },
     DEFAULT: { value: 0 },
     SELECTED: { value: 1 },
-    BUYING: { value: 2 }
+    BOUGHT: { value: 2 }
 };
 
 Object.keys(STATUS_CART).forEach(key => {

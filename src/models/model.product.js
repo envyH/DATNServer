@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { STATUS_PRODUCT } = require('../utils/product');
 
 const productSchema = mongoose.Schema({
     category_id: { type: mongoose.Schema.Types.ObjectId, ref: "categories", required: true },
@@ -12,7 +13,7 @@ const productSchema = mongoose.Schema({
     sold: { type: String, required: false, default: "0" },
     img_cover: { type: String, required: true },
     video: { type: String, required: true },
-    status: { type: String, required: true, default: "stocking" },
+    status: { type: Number, required: true, default: STATUS_PRODUCT.STOCKING.value },
     color_code: { type: String, required: true },
     created_at: { type: String, required: true },
 }, {

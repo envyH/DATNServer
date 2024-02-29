@@ -50,20 +50,22 @@ async function getProductCart(customerID) {
         //         });
         //     }
         // }
-        let dataResponse = {
-            _id: cart._id,
-            product_id: productInfo._id,
-            name: productInfo.name,
-            image: productInfo.img_cover,
-            quantity_product: productInfo.quantity,
-            quantity_cart: quantityCart,
-            price: productInfo.price,
-            note: cart.note,
-            status_cart: cart.status,
-            status_product: productInfo.status,
-            created_at: cart.created_at,
+        if (cart.status === STATUS_CART.DEFAULT.value || cart.status === STATUS_CART.SELECTED.value) {
+            let dataResponse = {
+                _id: cart._id,
+                product_id: productInfo._id,
+                name: productInfo.name,
+                image: productInfo.img_cover,
+                quantity_product: productInfo.quantity,
+                quantity_cart: quantityCart,
+                price: productInfo.price,
+                note: cart.note,
+                status_cart: cart.status,
+                status_product: productInfo.status,
+                created_at: cart.created_at,
+            }
+            mData.push(dataResponse);
         }
-        mData.push(dataResponse);
     }
     return mData;
 
@@ -90,11 +92,32 @@ class CartService {
         }
 
         try {
-            const filter = { customer_id: customerID, product_id: productID };
+            const filter = {
+                customer_id: customerID,
+                product_id: productID,
+                status: { $in: [STATUS_CART.DEFAULT.value, STATUS_CART.SELECTED.value] }
+            };
+            let product = await ProductModel.productModel.findById(productID);
+            if (parseInt(product.quantity) <= 0) {
+                return res.send({
+                    message: "The product is temporarily out of stock and cannot be ordered",
+                    statusCode: 400,
+                    code: "cart/product-is-temporarily-out-of-stock",
+                    timestamp
+                });
+            }
             let cart = await CartModel.cartModel.findOne(filter).lean();
             let newQuantity = 1;
             if (cart) {
                 newQuantity = parseInt(cart.quantity) + parseInt(mQuantity);
+                if (newQuantity > parseInt(product.quantity)) {
+                    return res.send({
+                        message: "product quantity exceeds the limit",
+                        statusCode: 400,
+                        code: "cart/update-quantity-failed",
+                        timestamp
+                    });
+                }
             }
             const update = { quantity: newQuantity };
             if (cart) {
@@ -262,8 +285,8 @@ class CartService {
             return res.send({ message: "missing status", statusCode: 400, code: "cart/missing-status", timestamp });
         }
 
-        let statusValue = parseInt(status);
-        if (typeof statusValue !== 'number') {
+        let isNumberType = isNumber(status);
+        if (!isNumberType) {
             return res.send({
                 message: "status invalid type",
                 statusCode: 400,
@@ -271,7 +294,7 @@ class CartService {
                 timestamp
             });
         }
-
+        let statusValue = parseInt(status);
         let isValidStatus = checkStatusInCart(statusValue);
         if (!isValidStatus) {
             return res.send({

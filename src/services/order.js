@@ -7,9 +7,11 @@ const UploadFileFirebase = require('../services/uploadFileFirebase');
 const ProductModel = require('../models/model.product');
 const CartModel = require('../models/model.cart');
 const OrderModel = require('../models/model.order');
+const OrderDetailModel = require('../models/model.orderdetail');
 
 const { isNumber } = require('../utils/index');
 const { STATUS_CART } = require('../utils/cart');
+const { STATUS_PRODUCT } = require('../utils/product');
 const { checkPaymentMethod, PAYMENT_METHOD } = require('../utils/payment');
 
 
@@ -132,12 +134,53 @@ class OrderService {
 
 
         try {
+            let totalAmount = 0;
+            let productOrders = await getProductCart(customerID);
+            let productLimit = [];
+            await Promise.all(
+                productOrders.map(async (productOrder) => {
+                    if (parseInt(productOrder.quantity_cart) > parseInt(productOrder.quantity_product)) {
+                        productLimit.push(productOrder.product_id);
+                    }
+                })
+            );
+
+            if (productLimit.length > 0) {
+                return res.send({
+                    message: "product quantity exceeds the limit",
+                    statusCode: 400,
+                    code: "order/product-quantity-exceeds-the-limit",
+                    timestamp
+                });
+            }
+
             let order = new OrderModel.orderModel({
                 customer_id: customerID,
                 payment_methods: PAYMENT_METHOD.ZALO_PAY.value,
                 created_at: timestamp,
             });
+
+            await Promise.all(productOrders.map(async productOrder => {
+                let detailOrder = new OrderDetailModel.orderDetailModel({
+                    order_id: order._id,
+                    product_id: productOrder.product_id,
+                    quantity: productOrder.quantity_cart,
+                });
+                let product = await ProductModel.productModel.findById(productOrder.product_id);
+                let newQuantityProduct = parseInt(product.quantity) - parseInt(productOrder.quantity_cart);
+                product.quantity = newQuantityProduct;
+                if (newQuantityProduct === 0) {
+                    product.status = STATUS_PRODUCT.OUT_OF_STOCK.value;
+                }
+                product.sold = parseInt(product.sold) + parseInt(productOrder.quantity_cart);
+                totalAmount = parseInt(productOrder.quantity_cart) * parseInt(product.price);
+                await product.save();
+                await detailOrder.save();
+                await CartModel.cartModel.findByIdAndUpdate(productOrder._id, { status: STATUS_CART.BOUGHT.value });
+            }));
+            order.amount = totalAmount;
             await order.save();
+
             return res.send({
                 message: "create order zalopay success",
                 statusCode: 200,
