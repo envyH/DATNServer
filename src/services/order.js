@@ -8,11 +8,14 @@ const ProductModel = require('../models/model.product');
 const CartModel = require('../models/model.cart');
 const OrderModel = require('../models/model.order');
 const OrderDetailModel = require('../models/model.orderdetail');
+const NotificationModel = require('../models/model.notification');
+const CustomerModel = require('../models/model.customer');
 
 const { isNumber } = require('../utils/index');
 const { STATUS_CART } = require('../utils/cart');
 const { STATUS_PRODUCT } = require('../utils/product');
 const { checkPaymentMethod, PAYMENT_METHOD } = require('../utils/payment');
+const { admin } = require('../configs/firebase/index');
 
 
 async function getProductCart(customerID) {
@@ -57,6 +60,36 @@ async function getProductCart(customerID) {
     }
     return mData;
 }
+
+const createNotification = async (title, content, img, timestamp, registrationToken) => {
+    let notification = new NotificationModel.notificationModel({
+        title: title,
+        content: content,
+        image: img,
+        created_at: timestamp,
+    });
+    await notification.save();
+    sendMessage(registrationToken, title, content);
+}
+
+const sendMessage = (registrationToken, title, body) => {
+    let message = {
+        data: {
+            title: title,
+            body: body,
+        },
+        token: registrationToken,
+    };
+
+    admin.messaging().send(message)
+        .then((response) => {
+            console.log('Successfully sent message:', response);
+        })
+        .catch((error) => {
+            console.error('Error sending message:', error);
+        });
+}
+
 
 class OrderService {
     getAmountZaloPay = async (req, res) => {
@@ -132,7 +165,6 @@ class OrderService {
             return res.send({ message: "missing customerID", statusCode: 400, code: "checkout/missing-customerid", timestamp });
         }
 
-
         try {
             let totalAmount = 0;
             let productOrders = await getProductCart(customerID);
@@ -181,6 +213,10 @@ class OrderService {
             order.amount = totalAmount;
             await order.save();
 
+            let customer = await CustomerModel.customerModel.findById(customerID);
+            await createNotification("Đặt đơn hàng",
+                `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ${PAYMENT_METHOD.ZALO_PAY.value} với mã đơn hàng ${order._id}`,
+                "product.image", timestamp, customer.fcm);
             return res.send({
                 message: "create order zalopay success",
                 statusCode: 200,

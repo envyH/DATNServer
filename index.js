@@ -17,14 +17,8 @@ const io = new Server(server, {
     // Socket.IO options
 });
 
-// firebase-admin
-const admin = require('firebase-admin');
-const serviceAccount = require('./src/configs/firebase/config.json');
-if (admin.apps.length === 0) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-    });
-}
+// init Firebase admin
+const { admin } = require('./src/configs/firebase/index');
 
 const sessionConfig = require('./src/configs/session.config');
 
