@@ -132,6 +132,14 @@ class OrderService {
 
         try {
             let productOrders = await getProductCart(customerID);
+            if (productOrders.length == 0) {
+                return res.send({
+                    message: "no product order",
+                    statusCode: 400,
+                    code: "order/no product order",
+                    timestamp
+                });
+            }
             let sum = 0;
             await Promise.all(
                 productOrders.map(async (productOrder) => {
@@ -264,6 +272,14 @@ class OrderService {
         try {
             let totalAmount = 0;
             let productOrders = await getProductCart(customerID);
+            if (productOrders.length == 0) {
+                return res.send({
+                    message: "no product order",
+                    statusCode: 400,
+                    code: "order/no product order",
+                    timestamp
+                });
+            }
             let productLimit = [];
             await Promise.all(
                 productOrders.map(async (productOrder) => {

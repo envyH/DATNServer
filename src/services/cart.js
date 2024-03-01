@@ -380,6 +380,113 @@ class CartService {
         }
     }
 
+    buyNow = async (req, res) => {
+        let customerID = req.body.customer_id;
+        let productID = req.body.product_id;
+        let quantity = req.body.quantity;
+        let note = req.body.note; // option
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+        if (customerID === undefined || customerID.trim().length == 0) {
+            return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
+        }
+        if (productID === undefined || productID.trim().length == 0) {
+            return res.send({ message: "missing productID", statusCode: 400, code: "cart/missing-productid", timestamp });
+        }
+
+        try {
+            let product = await ProductModel.productModel.findById(productID).lean();
+            let isNumberType = isNumber(quantity);
+            if (!isNumberType) {
+                return res.send({
+                    message: "quantity invalid type",
+                    statusCode: 400,
+                    code: "cart/quantity-invalid-type",
+                    timestamp
+                });
+            }
+            let quantityValue = parseInt(quantity);
+            let mData = [];
+            // TODO fix buy now
+            let dataProductCart = {
+                product_id: product._id,
+                name: product.name,
+                image: product.img_cover,
+                price: product.price,
+                quantity_product: product.quantity,
+                quantity_cart: quantityValue,
+                note: note,
+                status_product: product.status,
+                status_cart: STATUS_CART.BUYING.value
+            }
+            mData.push(dataProductCart);
+            return res.send({
+                message: "create buy now success",
+                statusCode: 200,
+                productCarts: mData,
+                code: "cart/create-buy-now-success",
+                timestamp
+            });
+        } catch (e) {
+            console.log(e.message);
+            return res.send({
+                message: e.message.toString(),
+                statusCode: 400,
+                code: "cart/buy-now-failed",
+                timestamp
+            });
+        }
+    }
+
+    buyNowCart = async (req, res) => {
+        let customerID = req.body.customerID;
+        let cartID = req.body.cartID;
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+        if (customerID === undefined || customerID.trim().length == 0) {
+            return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
+        }
+        if (cartID === undefined || cartID.trim().length == 0) {
+            return res.send({ message: "missing cartID", statusCode: 400, code: "cart/missing-cartid", timestamp });
+        }
+        try {
+            await CartModel.cartModel.findByIdAndUpdate(cartID, { status: STATUS_CART.SELECTED.value });
+            let cartInfo = await CartModel.cartModel.findById(cartID);
+            let product = await ProductModel.productModel.findById(cartInfo.product_id);
+
+            let mData = [];
+            let dataProductCart = {
+                product_id: cartInfo._id,
+                name: product.name,
+                image: product.img_cover,
+                price: product.price,
+                quantity_product: product.quantity,
+                quantity_cart: cartInfo.quantity,
+                note: cartInfo.note,
+                status_product: product.status,
+                status_cart: STATUS_CART.BUYING.value
+            }
+            mData.push(dataProductCart);
+            return res.send({
+                message: "create buy now cart success",
+                statusCode: 200,
+                productCarts: mData,
+                code: "cart/create-buy-now-cart-success",
+                timestamp
+            });
+        } catch (e) {
+            console.log(e.message);
+            return res.send({
+                message: e.message.toString(),
+                statusCode: 400,
+                code: "cart/buy-now-cart-failed",
+                timestamp
+            });
+        }
+    }
+
 
 }
 
