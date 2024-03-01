@@ -339,32 +339,7 @@ class OrderService {
         }
     }
 
-    paySuccess = (req, res) => {
-        let date = new Date();
-        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
-        console.log("+++++++++++++++++++++++++++++++++++++++++");
-        return res.send({
-            message: "pay success",
-            statusCode: 200,
-            code: "order/pay-success",
-            timestamp
-        });
-    }
-
-    payFail = (req, res) => {
-        let date = new Date();
-        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
-
-        return res.send({
-            message: "pay fail",
-            statusCode: 400,
-            code: "order/pay-fail",
-            timestamp
-        });
-    }
-
     vnpayReturn = async (req, res) => {
-        console.log("=============================================");
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
         let vnp_Params = req.query;

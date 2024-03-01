@@ -16,8 +16,6 @@ router.get("/vnpay_return", OrderService.vnpayReturn);
 router.get("/vnpay_ipn", OrderService.vnpayIPN);
 router.post("/querydr", OrderService.queryDR);
 router.post("/refund", OrderService.refund);
-router.get("/paySuccess", OrderService.paySuccess);
-router.get("/payFail", OrderService.payFail);
 
 
 

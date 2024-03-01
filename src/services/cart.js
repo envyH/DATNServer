@@ -348,12 +348,16 @@ class CartService {
             });
         }
         try {
+            const filter = {
+                customer_id: customerID,
+                status: { $in: [STATUS_CART.DEFAULT.value, STATUS_CART.SELECTED.value] }
+            };
             if (isSelected === 'true') {
-                let dataCart = await CartModel.cartModel.updateMany({ customer_id: customerID }, { status: STATUS_CART.SELECTED.value });
+                let dataCart = await CartModel.cartModel.updateMany(filter, { status: STATUS_CART.SELECTED.value });
                 // console.log(dataCart.matchedCount);
                 // console.log(dataCart.modifiedCount);
             } else {
-                let dataCart = await CartModel.cartModel.updateMany({ customer_id: customerID }, { status: STATUS_CART.DEFAULT.value });
+                let dataCart = await CartModel.cartModel.updateMany(filter, { status: STATUS_CART.DEFAULT.value });
                 // console.log(dataCart.matchedCount);
                 // console.log(dataCart.modifiedCount);
             }
