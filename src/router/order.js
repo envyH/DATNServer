@@ -10,6 +10,15 @@ const OrderService = require('../services/order');
 router.post("/get/amount-zalopay", checkPermission, OrderService.getAmountZaloPay);
 router.post("/create/zalopay", checkPermission, OrderService.createOrderZaloPay);
 
+// TODO VNPay
+router.post("/create_payment_url", checkPermission, OrderService.createPaymentURL);
+router.get("/vnpay_return", OrderService.vnpayReturn);
+router.get("/vnpay_ipn", OrderService.vnpayIPN);
+router.post("/querydr", checkPermission, OrderService.queryDR);
+router.post("/refund", checkPermission, OrderService.refund);
+router.get("/paySuccess", OrderService.paySuccess);
+router.get("/payFail", OrderService.payFail);
+
 
 
 module.exports = router

@@ -7,10 +7,7 @@ const { checkPermission } = require('../middlewares/middleware');
 const CategoryService = require('../services/category');
 
 
-router.post("/get",
-    checkPermission,
-    CategoryService.getList
-);
+router.post("/get", checkPermission, CategoryService.getList);
 
 
 module.exports = router

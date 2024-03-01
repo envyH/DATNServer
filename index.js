@@ -53,7 +53,7 @@ process.on('warning', (warning) => {
 const db = require('./src/configs/mongoose/config');
 
 // init route
-app.use('/', require('./src/router'));
+app.use('/', require('./src/router/_index'));
 app.use('/v1/api/', require('./src/router/api'));
 
 // catch 404 and forward to error handler
