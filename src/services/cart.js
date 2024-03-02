@@ -408,7 +408,6 @@ class CartService {
             }
             let quantityValue = parseInt(quantity);
             let mData = [];
-            // TODO fix buy now
             let dataProductCart = {
                 product_id: product._id,
                 name: product.name,
@@ -458,7 +457,7 @@ class CartService {
 
             let mData = [];
             let dataProductCart = {
-                product_id: cartInfo._id,
+                product_id: product._id,
                 name: product.name,
                 image: product.img_cover,
                 price: product.price,

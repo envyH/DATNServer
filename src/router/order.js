@@ -8,7 +8,9 @@ const OrderService = require('../services/order');
 
 
 router.post("/get/amount-zalopay", checkPermission, OrderService.getAmountZaloPay);
+router.post("/get/amount-zalopay-now", checkPermission, OrderService.getAmountZaloPayNow);
 router.post("/create/zalopay", checkPermission, OrderService.createOrderZaloPay);
+router.post("/create/zalopay-now", checkPermission, OrderService.createOrderZaloPayNow);
 
 // TODO VNPay
 router.post("/create_payment_url", checkPermission, OrderService.createPaymentURL);
