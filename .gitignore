@@ -1,5 +1,4 @@
 .idea/
-src/configs/firebase/config.json
 node_modules
 .vercel
 .idea

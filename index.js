@@ -76,11 +76,6 @@ app.use((error, req, res, next) => {
     // render the error page
     res.status(statusCode);
     return res.render("error");
-    // return res.status(statusCode).json({
-    //     status: 'error',
-    //     code: statusCode,
-    //     message: error.message || "Internal Server Error"
-    // });
 });
 
 
