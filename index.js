@@ -42,7 +42,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "/src/public")));
-app.use(session(sessionConfig));
+// app.use(session(sessionConfig));
 
 
 process.on('warning', (warning) => {
