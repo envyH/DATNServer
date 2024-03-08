@@ -2,14 +2,18 @@ version: '3.4'
 
 services:
   serverdatn:
+    container_name: serverdatn
     image: serverdatn
     build:
       context: .
       dockerfile: ./Dockerfile
-    volumes:
-      - .:/app
-      - ./.env:/app/.env 
-    environment:
-      NODE_ENV: production
     ports:
-      - 3000:3000
+      - "3000:3000"
+    depends_on:
+      - mongo
+  mongo:
+    container_name: mongo
+    image: mongo
+    ports:
+    - '27012:27017'
+  
