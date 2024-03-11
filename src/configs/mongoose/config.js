@@ -8,7 +8,7 @@ class Database {
         this.connect();
     }
     connect(type = 'mongodb') {
-        mongoose.connect(connecURL).then(_ => console.log(`Connect MongoDB Success`))
+        mongoose.connect(connecURL).then(_ => console.log(`Connect DB Success`))
             .catch(err => console.log(`Error connect DB: ${err.message}`));
     }
     static getInstance() {
