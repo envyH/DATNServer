@@ -1,10 +1,14 @@
+const { v4: uuidv4 } = require('uuid');
 const moment = require('moment-timezone');
 
 const specificTimeZone = 'Asia/Ho_Chi_Minh';
 const formatType = "YYYY-MM-DD-HH:mm:ss";
 
-const UploadFileFirebase = require('../services/uploadFileFirebase');
-const ProductModel = require('../models/model.product');
+const FirebaseService = require('../services/firebase');
+
+const { ProductModel } = require('../models');
+const MessageResponses = require('../models/model.message.response');
+
 
 class ProductService {
 
@@ -19,8 +23,15 @@ class ProductService {
 
         try {
             let product = await ProductModel.productModel.find().lean();
+            let messageResponse = new MessageResponses();
+            const id = uuidv4();
+            messageResponse.setId(id);
+            messageResponse.setCode(200);
+            messageResponse.setContent("get list product success");
+            messageResponse.setCreatedAt(timestamp);
+            console.log(messageResponse.getContent());
             return res.send({
-                message: "get list product success",
+                message: messageResponse,
                 statusCode: 200,
                 code: "product/get-success",
                 products: product,
@@ -54,8 +65,15 @@ class ProductService {
             let data = [];
             let product = await ProductModel.productModel.findById(productID).lean();
             data.push(product);
+            let messageResponse = new MessageResponses();
+            const id = uuidv4();
+            messageResponse.setId(id);
+            messageResponse.setCode(200);
+            messageResponse.setContent("get list product success");
+            messageResponse.setCreatedAt(timestamp);
+            console.log(messageResponse.getContent());
             return res.send({
-                message: "get detail product success",
+                message: messageResponse,
                 statusCode: 200,
                 code: "product/get-detail-success",
                 products: data,

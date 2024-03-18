@@ -1,11 +1,13 @@
+const { v4: uuidv4 } = require('uuid');
 const moment = require('moment-timezone');
 
 const specificTimeZone = 'Asia/Ho_Chi_Minh';
 const formatType = "YYYY-MM-DD-HH:mm:ss";
 
-const UploadFileFirebase = require('../services/uploadFileFirebase');
-const CartModel = require('../models/model.cart');
-const ProductModel = require('../models/model.product');
+const FirebaseService = require('../services/firebase');
+
+const { CartModel, ProductModel } = require('../models');
+const MessageResponses = require('../models/model.message.response');
 
 const { STATUS_CART } = require('../utils/cart');
 const { PAYMENT_METHOD } = require('../utils/payment');
@@ -67,8 +69,15 @@ class CheckoutService {
         try {
             let mData = await getProductCart(customerID);
             // console.log(mData);
+            let messageResponse = new MessageResponses();
+            const id = uuidv4();
+            messageResponse.setId(id);
+            messageResponse.setCode(200);
+            messageResponse.setContent("get product checkout success");
+            messageResponse.setCreatedAt(timestamp);
+            console.log(messageResponse.getContent());
             return res.send({
-                message: "get product checkout success",
+                message: messageResponse,
                 statusCode: 200,
                 productCarts: mData,
                 code: "checkout/get-productcheckout-success",

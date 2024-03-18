@@ -1,15 +1,14 @@
+const { v4: uuidv4 } = require('uuid');
 const moment = require('moment-timezone');
 
 const specificTimeZone = 'Asia/Ho_Chi_Minh';
 const formatType = "YYYY-MM-DD-HH:mm:ss";
 
-const UploadFileFirebase = require('../services/uploadFileFirebase');
-const ProductModel = require('../models/model.product');
-const CartModel = require('../models/model.cart');
-const OrderModel = require('../models/model.order');
-const OrderDetailModel = require('../models/model.orderdetail');
-const NotificationModel = require('../models/model.notification');
-const CustomerModel = require('../models/model.customer');
+const FirebaseService = require('../services/firebase');
+const NotificationService = require('../services/notification');
+
+const { ProductModel, CartModel, OrderModel, OrderDetailModel, NotificationModel, CustomerModel } = require('../models');
+const MessageResponses = require('../models/model.message.response');
 
 const { isNumber } = require('../utils/index');
 const { STATUS_CART } = require('../utils/cart');
@@ -19,9 +18,10 @@ const { admin } = require('../configs/firebase/index');
 const { sortObject } = require('../utils/order');
 
 
+
 let mCustomerID;
 
-async function getProductCart(customerID) {
+const getProductCart = async (customerID) => {
     let carts = await CartModel.cartModel.find({ customer_id: customerID, status: 1 }).lean();
     let dataProduct = [];
     await Promise.all(
@@ -63,36 +63,6 @@ async function getProductCart(customerID) {
     }
     return mData;
 }
-
-const createNotification = async (title, content, img, timestamp, registrationToken) => {
-    let notification = new NotificationModel.notificationModel({
-        title: title,
-        content: content,
-        image: img,
-        created_at: timestamp,
-    });
-    await notification.save();
-    sendMessage(registrationToken, title, content);
-}
-
-const sendMessage = (registrationToken, title, body) => {
-    let message = {
-        data: {
-            title: title,
-            body: body,
-        },
-        token: registrationToken,
-    };
-
-    admin.messaging().send(message)
-        .then((response) => {
-            console.log('Successfully sent message:', response);
-        })
-        .catch((error) => {
-            console.error('Error sending message:', error);
-        });
-}
-
 
 class OrderService {
     getAmountZaloPay = async (req, res) => {
@@ -148,8 +118,16 @@ class OrderService {
                 })
             );
 
+            let messageResponse = new MessageResponses();
+            const id = uuidv4();
+            messageResponse.setId(id);
+            messageResponse.setCode(200);
+            messageResponse.setContent("create order success");
+            messageResponse.setCreatedAt(timestamp);
+            console.log(JSON.stringify(messageResponse.toJSON()));
+
             return res.send({
-                message: "create order success",
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 amount: sum,
                 code: "order/get-amount-zalopay-success",
@@ -288,11 +266,28 @@ class OrderService {
             await order.save();
 
             let customer = await CustomerModel.customerModel.findById(customerID);
-            await createNotification("Đặt đơn hàng",
-                `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ${PAYMENT_METHOD.ZALO_PAY.value} với mã đơn hàng ${order._id}`,
-                "product.image", timestamp, customer.fcm);
+            let imageProduct = "product.image";
+            let title = "Đặt đơn hàng";
+            let message = `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ZALOPAY với mã đơn hàng ${order._id}`;
+            await NotificationService.createNotification(title, message, imageProduct, customer.fcm);
+            // let messageResponse = MessageResponseModel.messageResponsesModel({
+            //     code: 200,
+            //     title: title,
+            //     content: message,
+            //     image: imageProduct,
+            //     created_at: timestamp
+            // });
+            let messageResponse = new MessageResponses();
+            const id = uuidv4();
+            messageResponse.setId(id);
+            messageResponse.setCode(200);
+            messageResponse.setTitle(title);
+            messageResponse.setContent(message);
+            messageResponse.setImage(imageProduct);
+            messageResponse.setCreatedAt(timestamp);
+            console.log(JSON.stringify(messageResponse.toJSON()));
             return res.send({
-                message: "create order zalopay success",
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 code: "order/create-order-zalopay-success",
                 timestamp
@@ -369,9 +364,9 @@ class OrderService {
             await order.save();
 
             let customer = await CustomerModel.customerModel.findById(customerID);
-            await createNotification("Đặt đơn hàng",
-                `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ${PAYMENT_METHOD.ZALO_PAY.value} với mã đơn hàng ${order._id}`,
-                "product.image", timestamp, customer.fcm);
+            await NotificationService.createNotification("Đặt đơn hàng",
+                `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ${PAYMENT_METHOD.ZALO_PAY.value} 
+                    với mã đơn hàng ${order._id}`, "product.image", customer.fcm);
             return res.send({
                 message: "create order zalopay success",
                 statusCode: 200,
@@ -575,9 +570,9 @@ class OrderService {
                     await order.save();
 
                     let customer = await CustomerModel.customerModel.findById(mCustomerID);
-                    await createNotification("Đặt đơn hàng",
-                        `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ${PAYMENT_METHOD.E_BANKING.value} với mã đơn hàng ${order._id}`,
-                        "product.image", timestamp, customer.fcm);
+                    await NotificationService.createNotification("Đặt đơn hàng",
+                        `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ${PAYMENT_METHOD.E_BANKING.value} 
+                            với mã đơn hàng ${order._id}`, "product.image", customer.fcm);
                     return res.redirect(`${ipAddress}/v1/api/order/paySuccess`);
                 } catch (e) {
                     console.log(e.message);

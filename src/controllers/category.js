@@ -4,8 +4,9 @@ const moment = require('moment-timezone');
 const specificTimeZone = 'Asia/Ho_Chi_Minh';
 const formatType = "YYYY-MM-DD-HH:mm:ss";
 
-const UploadFileFirebase = require('../services/uploadFileFirebase');
-const CategoryModel = require('../models/model.category');
+const FirebaseService = require('../services/firebase');
+
+const { CategoryModel } = require('../models');
 
 
 class CategoryController {
@@ -19,7 +20,7 @@ class CategoryController {
                 category: listCategory
             });
         } catch (e) {
-            console.log("CategoryController: " ,e.message);
+            console.log("CategoryController: ", e.message);
             return res.send({ message: "category not found", code: 0 });
         }
 
@@ -47,7 +48,7 @@ class CategoryController {
                 created_at: timestamp,
             });
             // console.log(fileimg);
-            let img = await UploadFileFirebase.uploadFileToFBStorage(
+            let img = await FirebaseService.uploadImage(
                 category._id.toString(),
                 "",
                 "categories",

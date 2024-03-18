@@ -1,4 +1,5 @@
 const moment = require('moment-timezone');
+const { v4: uuidv4 } = require('uuid');
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const bcrypt = require('bcrypt');
@@ -11,12 +12,12 @@ const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$
 const phoneNumberRegex = /^(?:\+84|0)[1-9]\d{8}$/;
 
 
-const UploadFileFirebase = require('./uploadFileFirebase');
+const FirebaseService = require('./firebase');
+const OTPService = require('./otp');
 
-const CustomerModel = require('../models/model.customer');
-const AuthTokenModel = require('../models/model.auth.token');
+const { AuthTokenModel, CustomerModel, MessageResponseModel } = require('../models');
+const MessageResponses = require('../models/model.message.response');
 
-const { sendEmailVerifyCus, sendOTPByEmail } = require("./otp");
 const { formatPhoneNumber } = require('../helpers/index');
 
 class CustomerService {
@@ -83,7 +84,7 @@ class CustomerService {
                     // const link = `http://${ipAddressLocal}:${portLocal}/v1/api/customer/verify?type=${"register"}&key=${cusByEmail._id.toString()}`;
                     const link = `${URL}/v1/api/customer/verify?type=${"register"}&key=${cusByEmail._id.toString()}`;
                     const text = `STECH xin chào bạn\nẤn vào đây để xác thực tài khoản: ${link}`;
-                    let index = sendEmailVerifyCus(email, text);
+                    let index = OTPService.sendEmailVerifyCus(email, text);
                     if (index === 0) {
                         return res.send({
                             message: "send verify account fail",
@@ -143,7 +144,7 @@ class CustomerService {
             // const link = `http://${ipAddressLocal}:${portLocal}/v1/api/customer/verify?type=${"register"}&key=${cus._id.toString()}`;
             const link = `${URL}/v1/api/customer/verify?type=${"register"}&key=${cus._id.toString()}`;
             const text = `STECH xin chào bạn\nẤn vào đây để xác thực tài khoản: ${link}`;
-            let index = sendEmailVerifyCus(email, text);
+            let index = OTPService.sendEmailVerifyCus(email, text);
             if (index === 0) {
                 return res.send({
                     message: "send verify account fail",
@@ -323,7 +324,7 @@ class CustomerService {
                         timestamp
                     });
                 }
-                let index = sendOTPByEmail(cusEmail.email);
+                let index = OTPService.sendOTPByEmail(cusEmail.email);
                 if (index === 0) {
                     return res.send({
                         message: "Verify customer failed",
@@ -381,8 +382,13 @@ class CustomerService {
                 if (match) {
                     let authToken = await AuthTokenModel.authTokenModel.findOne({ customer_id: cusEmail._id });
                     if (authToken && authToken.token === token) {
+                        let messageResponse = new MessageResponses();
+                        const id = uuidv4();
+                        messageResponse.setId(id);
+                        messageResponse.setCode(200);
+                        messageResponse.setCreatedAt(timestamp);
                         return res.send({
-                            message: "OKE",
+                            message: messageResponse,
                             statusCode: 200,
                             code: `auth/200`,
                             timestamp
@@ -413,8 +419,6 @@ class CustomerService {
                     timestamp
                 });
             }
-
-
         } catch (e) {
             console.log(e.message);
             return res.send({
@@ -533,8 +537,6 @@ class CustomerService {
     logout = async (req, res) => {
         const customerID = req.body.customerID;
         const token = req.header('Authorization');
-        const ip_client = req.rawHeaders[7];
-        console.log(`IP_ADDRESS: ${ip_client}`);
 
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);

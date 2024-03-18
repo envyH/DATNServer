@@ -3,8 +3,9 @@ const moment = require('moment-timezone');
 const specificTimeZone = 'Asia/Ho_Chi_Minh';
 const formatType = "YYYY-MM-DD-HH:mm:ss";
 
-const UploadFileFirebase = require('./uploadFileFirebase');
-const AuthTokenModel = require('../models/model.auth.token');
+const FirebaseService = require('./firebase');
+
+const { AuthTokenModel } = require('../models');
 
 
 class AuthTokenService {

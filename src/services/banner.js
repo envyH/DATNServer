@@ -1,10 +1,14 @@
+const { v4: uuidv4 } = require('uuid');
 const moment = require('moment-timezone');
 
 const specificTimeZone = 'Asia/Ho_Chi_Minh';
 const formatType = "YYYY-MM-DD-HH:mm:ss";
 
-const UploadFileFirebase = require('../services/uploadFileFirebase');
-const BannerModel = require('../models/model.banner');
+const FirebaseService = require('../services/firebase');
+
+const { BannerModel } = require('../models');
+const MessageResponses = require('../models/model.message.response');
+
 
 class BannerService {
 
@@ -18,10 +22,16 @@ class BannerService {
         }
 
         try {
-
             let banner = await BannerModel.bannerModel.find().lean();
+            let messageResponse = new MessageResponses();
+            const id = uuidv4();
+            messageResponse.setId(id);
+            messageResponse.setCode(200);
+            messageResponse.setContent("get list banner success");
+            messageResponse.setCreatedAt(timestamp);
+            console.log(JSON.stringify(messageResponse.toJSON()));
             return res.send({
-                message: "get list banner success",
+                message: messageResponse,
                 statusCode: 200,
                 code: "banner/get-success",
                 banners: banner,

@@ -1,11 +1,13 @@
+const { v4: uuidv4 } = require('uuid');
 const moment = require('moment-timezone');
 
 const specificTimeZone = 'Asia/Ho_Chi_Minh';
 const formatType = "YYYY-MM-DD-HH:mm:ss";
 
-const UploadFileFirebase = require('../services/uploadFileFirebase');
-const CartModel = require('../models/model.cart');
-const ProductModel = require('../models/model.product');
+const FirebaseService = require('../services/firebase');
+
+const { CartModel, ProductModel } = require('../models');
+const MessageResponses = require('../models/model.message.response');
 
 const { STATUS_CART, checkStatusInCart } = require('../utils/cart');
 const { isNumber } = require('../utils/index');
@@ -140,8 +142,15 @@ class CartService {
                     created_at: timestamp,
                 });
                 await cart.save();
+                let messageResponse = new MessageResponses();
+                const id = uuidv4();
+                messageResponse.setId(id);
+                messageResponse.setCode(200);
+                messageResponse.setContent("add to cart success");
+                messageResponse.setCreatedAt(timestamp);
+                console.log(messageResponse.getContent());
                 return res.send({
-                    message: "add to cart success",
+                    message: messageResponse,
                     statusCode: 200,
                     code: "cart/add-success",
                     timestamp
@@ -170,8 +179,15 @@ class CartService {
         try {
             let mData = await getProductCart(customerID);
             // console.log(mData);
+            let messageResponse = new MessageResponses();
+            const id = uuidv4();
+            messageResponse.setId(id);
+            messageResponse.setCode(200);
+            messageResponse.setContent("get data cart success");
+            messageResponse.setCreatedAt(timestamp);
+            console.log(messageResponse.getContent());
             return res.send({
-                message: "get data cart success",
+                message: messageResponse,
                 statusCode: 200,
                 productCarts: mData,
                 code: "cart/getbycustomerid-success",
@@ -308,8 +324,15 @@ class CartService {
         try {
             await CartModel.cartModel.findByIdAndUpdate(cartID, { status: statusValue });
             let mData = await getProductCart(customerID);
+            let messageResponse = new MessageResponses();
+            const id = uuidv4();
+            messageResponse.setId(id);
+            messageResponse.setCode(200);
+            messageResponse.setContent("update status cart success");
+            messageResponse.setCreatedAt(timestamp);
+            console.log(messageResponse.getContent());
             return res.send({
-                message: "update status cart success",
+                message: messageResponse,
                 statusCode: 200,
                 productCarts: mData,
                 code: "cart/update-status-success",

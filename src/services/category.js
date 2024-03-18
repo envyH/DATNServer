@@ -1,10 +1,14 @@
+const { v4: uuidv4 } = require('uuid');
 const moment = require('moment-timezone');
 
 const specificTimeZone = 'Asia/Ho_Chi_Minh';
 const formatType = "YYYY-MM-DD-HH:mm:ss";
 
-const UploadFileFirebase = require('../services/uploadFileFirebase');
-const CategoryModel = require('../models/model.category');
+const FirebaseService = require('../services/firebase');
+
+const { CategoryModel } = require('../models');
+const MessageResponses = require('../models/model.message.response');
+
 
 class CategoryService {
 
@@ -18,10 +22,16 @@ class CategoryService {
         }
 
         try {
-
             let category = await CategoryModel.categoryModel.find().lean();
+            let messageResponse = new MessageResponses();
+            const id = uuidv4();
+            messageResponse.setId(id);
+            messageResponse.setCode(200);
+            messageResponse.setContent("get list category success");
+            messageResponse.setCreatedAt(timestamp);
+            console.log(messageResponse.getContent());
             return res.send({
-                message: "get list category success",
+                message: messageResponse,
                 statusCode: 200,
                 code: "category/get-success",
                 categories: category,
