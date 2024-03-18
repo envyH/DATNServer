@@ -12,6 +12,7 @@ router.post('/login', CustomerService.login);
 router.post('/login/check', CustomerService.checkLogin);
 router.post('/login/verify', CustomerService.verifyLogin);
 router.post('/add/fcm/', CustomerService.addFCM);
+router.post('/logout', CustomerService.logout);
 
 
 module.exports = router

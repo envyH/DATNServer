@@ -102,7 +102,7 @@ class OrderService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "missing customerID", statusCode: 400, code: "checkout/missing-customerid", timestamp });
         }
         if (type === undefined) {
@@ -173,7 +173,7 @@ class OrderService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "missing customerID", statusCode: 400, code: "checkout/missing-customerid", timestamp });
         }
         if (productCarts === undefined || productCarts.length == 0) {
@@ -235,7 +235,7 @@ class OrderService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "missing customerID", statusCode: 400, code: "checkout/missing-customerid", timestamp });
         }
 
@@ -315,7 +315,7 @@ class OrderService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "missing customerID", statusCode: 400, code: "checkout/missing-customerid", timestamp });
         }
         if (productOrders === undefined || productOrders.length == 0) {
@@ -392,7 +392,7 @@ class OrderService {
     // TODO VNPay
     createPaymentURL = async (req, res) => {
         const customerID = req.body.customerID;
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "missing customerID", statusCode: 400, code: "checkout/missing-customerid", timestamp });
         }
 

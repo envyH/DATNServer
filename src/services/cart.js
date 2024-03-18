@@ -81,10 +81,10 @@ class CartService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
         }
-        if (productID === undefined || productID.trim().length == 0) {
+        if (productID === undefined || productID.toString().trim().length == 0) {
             return res.send({ message: "missing productID", statusCode: 400, code: "cart/missing-productid", timestamp });
         }
         if (mQuantity === undefined || parseInt(mQuantity) == 0) {
@@ -164,7 +164,7 @@ class CartService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
         }
         try {
@@ -197,13 +197,13 @@ class CartService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
         }
-        if (cartID === undefined || cartID.trim().length == 0) {
+        if (cartID === undefined || cartID.toString().trim().length == 0) {
             return res.send({ message: "missing cartID", statusCode: 400, code: "cart/missing-cartid", timestamp });
         }
-        if (type === undefined || type.trim().length == 0) {
+        if (type === undefined || type.toString().trim().length == 0) {
             return res.send({ message: "missing type", statusCode: 400, code: "cart/missing-type", timestamp });
         }
         if (mQuantity === undefined || parseInt(mQuantity) <= 0) {
@@ -275,10 +275,10 @@ class CartService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
         }
-        if (cartID === undefined || cartID.trim().length == 0) {
+        if (cartID === undefined || cartID.toString().trim().length == 0) {
             return res.send({ message: "missing cartID", statusCode: 400, code: "cart/missing-cartid", timestamp });
         }
         if (status === undefined) {
@@ -332,10 +332,10 @@ class CartService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
         }
-        if (isSelected === undefined || isSelected.trim().length == 0) {
+        if (isSelected === undefined || isSelected.toString().trim().length == 0) {
             return res.send({ message: "missing isSelected", statusCode: 400, code: "cart/missing-isSelected", timestamp });
         }
 
@@ -388,10 +388,10 @@ class CartService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
         }
-        if (productID === undefined || productID.trim().length == 0) {
+        if (productID === undefined || productID.toString().trim().length == 0) {
             return res.send({ message: "missing productID", statusCode: 400, code: "cart/missing-productid", timestamp });
         }
 
@@ -444,10 +444,10 @@ class CartService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
         }
-        if (cartID === undefined || cartID.trim().length == 0) {
+        if (cartID === undefined || cartID.toString().trim().length == 0) {
             return res.send({ message: "missing cartID", statusCode: 400, code: "cart/missing-cartid", timestamp });
         }
         try {

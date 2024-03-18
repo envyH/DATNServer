@@ -13,7 +13,7 @@ class ProductService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "Missing customerID", statusCode: 400, code: "auth/missing-customerid", timestamp });
         }
 
@@ -43,10 +43,10 @@ class ProductService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "Missing customerID", statusCode: 400, code: "auth/missing-customerid", timestamp });
         }
-        if (productID === undefined || productID.trim().length == 0) {
+        if (productID === undefined || productID.toString().trim().length == 0) {
             return res.send({ message: "Missing productID", statusCode: 400, code: "auth/missing-productid", timestamp });
         }
 
@@ -78,10 +78,10 @@ class ProductService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "Missing customerID", statusCode: 400, code: "auth/missing-customerid", timestamp });
         }
-        if (categoryID === undefined || categoryID.trim().length == 0) {
+        if (categoryID === undefined || categoryID.toString().trim().length == 0) {
             return res.send({ message: "Missing categoryID", statusCode: 400, code: "auth/missing-categorytid", timestamp });
         }
 

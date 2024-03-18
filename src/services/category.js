@@ -13,7 +13,7 @@ class CategoryService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "Missing customerID", statusCode: 400, code: "auth/missing-customerid", timestamp });
         }
 

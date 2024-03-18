@@ -12,7 +12,10 @@ const phoneNumberRegex = /^(?:\+84|0)[1-9]\d{8}$/;
 
 
 const UploadFileFirebase = require('./uploadFileFirebase');
+
 const CustomerModel = require('../models/model.customer');
+const AuthTokenModel = require('../models/model.auth.token');
+
 const { sendEmailVerifyCus, sendOTPByEmail } = require("./otp");
 const { formatPhoneNumber } = require('../helpers/index');
 
@@ -31,16 +34,16 @@ class CustomerService {
         let portLocal = process.env.PORT;
 
 
-        if (email === undefined || email.trim().length == 0) {
+        if (email === undefined || email.toString().trim().length == 0) {
             return res.send({ message: "missing emai", statusCode: 400, code: "auth/missing-email", timestamp });
         }
-        if (password === undefined || password.trim().length == 0) {
+        if (password === undefined || password.toString().trim().length == 0) {
             return res.send({ message: "missing password", statusCode: 400, code: "auth/missing-password", timestamp });
         }
-        if (fullName === undefined || fullName.trim().length == 0) {
+        if (fullName === undefined || fullName.toString().trim().length == 0) {
             return res.send({ message: "missing full-name", statusCode: 400, code: "auth/missing-fullname", timestamp });
         }
-        if (phoneNumber === undefined || phoneNumber.trim().length == 0) {
+        if (phoneNumber === undefined || phoneNumber.toString().trim().length == 0) {
             return res.send({ message: "missing phone-number", statusCode: 400, code: "auth/missing-phonenumber", timestamp });
         }
 
@@ -216,10 +219,10 @@ class CustomerService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (email === undefined || email.trim().length == 0) {
+        if (email === undefined || email.toString().trim().length == 0) {
             return res.send({ message: "email require", statusCode: 400, code: "auth/missing-email", timestamp });
         }
-        if (password === undefined || password.trim().length == 0) {
+        if (password === undefined || password.toString().trim().length == 0) {
             return res.send({ message: "password require", statusCode: 400, code: "auth/missing-password", timestamp });
         }
 
@@ -357,11 +360,18 @@ class CustomerService {
         let email = req.body.email;
         let phoneNumer = req.body.phone_number;
         let password = req.body.password;
+        let token = req.body.token;
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (email === undefined || email.trim().length == 0) {
+        if (email === undefined || email.toString().trim().length == 0) {
             return res.send({ message: "email require", statusCode: 400, code: "auth/missing-email", timestamp });
+        }
+        if (password === undefined || password.toString().trim().length == 0) {
+            return res.send({ message: "password require", statusCode: 400, code: "auth/missing-password", timestamp });
+        }
+        if (token === undefined || token.toString().trim().length == 0) {
+            return res.send({ message: "token require", statusCode: 400, code: "auth/missing-token", timestamp });
         }
 
         try {
@@ -369,12 +379,22 @@ class CustomerService {
             if (cusEmail) {
                 const match = await bcrypt.compare(password, cusEmail.password);
                 if (match) {
+                    let authToken = await AuthTokenModel.authTokenModel.findOne({ customer_id: cusEmail._id });
+                    if (authToken && authToken.token === token) {
+                        return res.send({
+                            message: "OKE",
+                            statusCode: 200,
+                            code: `auth/200`,
+                            timestamp
+                        });
+                    }
                     return res.send({
-                        message: "OKE",
-                        statusCode: 200,
-                        code: `auth/200`,
+                        message: "wrong token",
+                        statusCode: 400,
+                        code: `auth/wrong-token`,
                         timestamp
                     });
+
                 }
                 else {
                     return res.send({
@@ -413,13 +433,13 @@ class CustomerService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "customerID require", statusCode: 400, code: "auth/missing-customerid", timestamp });
         }
-        if (password === undefined || password.trim().length == 0) {
+        if (password === undefined || password.toString().trim().length == 0) {
             return res.send({ message: "password require", statusCode: 400, code: "auth/missing-password", timestamp });
         }
-        if (otp === undefined || otp.trim().length == 0) {
+        if (otp === undefined || otp.toString().trim().length == 0) {
             return res.send({ message: "otp require", statusCode: 400, code: "auth/missing-otp", timestamp });
         }
         try {
@@ -435,6 +455,12 @@ class CustomerService {
                 let token = jwt.sign({ customer: customer }, process.env.ACCESS_TOKEN_SECRET, {
                     expiresIn: "2 days",
                 });
+                let authToken = new AuthTokenModel.authTokenModel({
+                    customer_id: customer._id,
+                    token,
+                    created_at: timestamp,
+                });
+                await authToken.save();
                 customer.otp = null;
                 await customer.save();
                 customer.password = password;
@@ -470,10 +496,10 @@ class CustomerService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        if (customerID === undefined || customerID.trim().length == 0) {
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
             return res.send({ message: "Missing customerID", statusCode: 400, code: "auth/missing-customerid", timestamp });
         }
-        if (fcm === undefined || fcm.trim().length == 0) {
+        if (fcm === undefined || fcm.toString().trim().length == 0) {
             return res.send({ message: "Missing fcm", statusCode: 400, code: "auth/missing-fcm", timestamp });
         }
 
@@ -502,6 +528,54 @@ class CustomerService {
                 code: `auth/${e.code}`,
                 timestamp
             })
+        }
+    }
+    logout = async (req, res) => {
+        const customerID = req.body.customerID;
+        const token = req.rawHeaders[1];
+        const ip_client = req.rawHeaders[7];
+        console.log(`IP_ADDRESS: ${ip_client}`);
+
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
+            return res.send({ message: "Missing customerID", statusCode: 400, code: "auth/missing-customerid", timestamp });
+        }
+        if (token === undefined || token.toString().trim().length == 0) {
+            return res.send({ message: "Missing token", statusCode: 400, code: "auth/missing-token", timestamp });
+        }
+
+        try {
+            const filter = {
+                customer_id: customerID,
+                token: token
+            };
+
+            let authToken = await AuthTokenModel.authTokenModel.findOneAndDelete(filter).lean();
+            if (!authToken) {
+                return res.send({
+                    message: `error delete token with customerID: ${customerID}`,
+                    statusCode: 400,
+                    code: "auth/delete-failed",
+                    timestamp
+                });
+            }
+            // console.log(authToken);
+            return res.send({
+                message: `logout success at: ${timestamp}`,
+                statusCode: 200,
+                code: "auth/delete-success",
+                timestamp
+            });
+        } catch (e) {
+            console.log(`auth.token service: delete: ${e.message}`);
+            return res.send({
+                message: e.message.toString(),
+                statusCode: 400,
+                code: "auth/create-failed",
+                timestamp
+            });
         }
     }
 
