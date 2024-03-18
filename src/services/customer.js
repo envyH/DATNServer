@@ -453,7 +453,7 @@ class CustomerService {
                 // ms('1m')      // 60000
                 // ms('5s')      // 5000
                 let token = jwt.sign({ customer: customer }, process.env.ACCESS_TOKEN_SECRET, {
-                    expiresIn: "2 days",
+                    expiresIn: "10h",
                 });
                 let authToken = new AuthTokenModel.authTokenModel({
                     customer_id: customer._id,
@@ -532,7 +532,7 @@ class CustomerService {
     }
     logout = async (req, res) => {
         const customerID = req.body.customerID;
-        const token = req.rawHeaders[1];
+        const token = req.header('Authorization');
         const ip_client = req.rawHeaders[7];
         console.log(`IP_ADDRESS: ${ip_client}`);
 
