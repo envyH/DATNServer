@@ -145,12 +145,11 @@ class CartService {
                 let messageResponse = new MessageResponses();
                 const id = uuidv4();
                 messageResponse.setId(id);
-                messageResponse.setCode(200);
+                messageResponse.setStatusCode(200);
                 messageResponse.setContent("add to cart success");
                 messageResponse.setCreatedAt(timestamp);
-                console.log(messageResponse.getContent());
                 return res.send({
-                    message: messageResponse,
+                    message: messageResponse.toJSON(),
                     statusCode: 200,
                     code: "cart/add-success",
                     timestamp
@@ -182,12 +181,11 @@ class CartService {
             let messageResponse = new MessageResponses();
             const id = uuidv4();
             messageResponse.setId(id);
-            messageResponse.setCode(200);
+            messageResponse.setStatusCode(200);
             messageResponse.setContent("get data cart success");
             messageResponse.setCreatedAt(timestamp);
-            console.log(messageResponse.getContent());
             return res.send({
-                message: messageResponse,
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 productCarts: mData,
                 code: "cart/getbycustomerid-success",
@@ -327,12 +325,11 @@ class CartService {
             let messageResponse = new MessageResponses();
             const id = uuidv4();
             messageResponse.setId(id);
-            messageResponse.setCode(200);
+            messageResponse.setStatusCode(200);
             messageResponse.setContent("update status cart success");
             messageResponse.setCreatedAt(timestamp);
-            console.log(messageResponse.getContent());
             return res.send({
-                message: messageResponse,
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 productCarts: mData,
                 code: "cart/update-status-success",

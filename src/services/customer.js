@@ -324,8 +324,8 @@ class CustomerService {
                         timestamp
                     });
                 }
-                let index = OTPService.sendOTPByEmail(cusEmail.email);
-                if (index === 0) {
+                let otp = await OTPService.sendOTPByEmail(cusEmail.email);
+                if (otp === 0) {
                     return res.send({
                         message: "Verify customer failed",
                         statusCode: 400,
@@ -333,11 +333,17 @@ class CustomerService {
                         timestamp
                     });
                 } else {
-                    cusEmail.otp = index;
+                    cusEmail.otp = otp;
                     await cusEmail.save();
                     cusEmail.password = password;
+                    let messageResponse = new MessageResponses();
+                    const id = uuidv4();
+                    messageResponse.setId(id);
+                    messageResponse.setStatusCode(200);
+                    messageResponse.setContent("Please verify your account");
+                    messageResponse.setCreatedAt(timestamp);
                     return res.send({
-                        message: "Please verify your account",
+                        message: messageResponse.toJSON(),
                         id: cusEmail._id,
                         customer: cusEmail,
                         statusCode: 200,
@@ -365,14 +371,23 @@ class CustomerService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponseRequire = new MessageResponses();
+        let id = uuidv4();
+        messageResponseRequire.setId(id);
+        messageResponseRequire.setStatusCode(400);
+        messageResponseRequire.setCreatedAt(timestamp);
+
         if (email === undefined || email.toString().trim().length == 0) {
-            return res.send({ message: "email require", statusCode: 400, code: "auth/missing-email", timestamp });
+            messageResponseRequire.setContent("email require");
+            return res.send({ message: messageResponseRequire.toJSON(), statusCode: 400, code: "auth/missing-email", timestamp });
         }
         if (password === undefined || password.toString().trim().length == 0) {
-            return res.send({ message: "password require", statusCode: 400, code: "auth/missing-password", timestamp });
+            messageResponseRequire.setContent("password require");
+            return res.send({ message: messageResponseRequire.toJSON(), statusCode: 400, code: "auth/missing-password", timestamp });
         }
         if (token === undefined || token.toString().trim().length == 0) {
-            return res.send({ message: "token require", statusCode: 400, code: "auth/missing-token", timestamp });
+            messageResponseRequire.setContent("token require");
+            return res.send({ message: messageResponseRequire.toJSON(), statusCode: 400, code: "auth/missing-token", timestamp });
         }
 
         try {
@@ -385,22 +400,27 @@ class CustomerService {
                         let messageResponse = new MessageResponses();
                         const id = uuidv4();
                         messageResponse.setId(id);
-                        messageResponse.setCode(200);
+                        messageResponse.setStatusCode(200);
                         messageResponse.setCreatedAt(timestamp);
                         return res.send({
-                            message: messageResponse,
+                            message: messageResponse.toJSON(),
                             statusCode: 200,
                             code: `auth/200`,
                             timestamp
                         });
                     }
+                    let messageResponse = new MessageResponses();
+                    const id = uuidv4();
+                    messageResponse.setId(id);
+                    messageResponse.setStatusCode(400);
+                    messageResponse.setContent("wrong token");
+                    messageResponse.setCreatedAt(timestamp);
                     return res.send({
-                        message: "wrong token",
+                        message: messageResponse.toJSON(),
                         statusCode: 400,
                         code: `auth/wrong-token`,
                         timestamp
                     });
-
                 }
                 else {
                     return res.send({
@@ -459,19 +479,35 @@ class CustomerService {
                 let token = jwt.sign({ customer: customer }, process.env.ACCESS_TOKEN_SECRET, {
                     expiresIn: "10h",
                 });
-                let authToken = new AuthTokenModel.authTokenModel({
-                    customer_id: customer._id,
-                    token,
-                    created_at: timestamp,
-                });
-                await authToken.save();
+                let currentAuthToken = await AuthTokenModel.authTokenModel.findOne({ customer_id: customer._id }).lean();
+                if (currentAuthToken) {
+                    const filterAuthToken = {
+                        customer_id: customer._id
+                    };
+                    const updateAuthToken = { token: token, created_at: timestamp };
+                    await AuthTokenModel.authTokenModel.findOneAndUpdate(filterAuthToken, updateAuthToken).lean();
+                }
+                else {
+                    let authToken = new AuthTokenModel.authTokenModel({
+                        customer_id: customer._id,
+                        token,
+                        created_at: timestamp,
+                    });
+                    await authToken.save();
+                }
                 customer.otp = null;
                 await customer.save();
                 customer.password = password;
+                let messageResponse = new MessageResponses();
+                const id = uuidv4();
+                messageResponse.setId(id);
+                messageResponse.setStatusCode(200);
+                messageResponse.setContent("Login success");
+                messageResponse.setCreatedAt(timestamp);
                 return res.send({
                     customer: customer,
                     token: token,
-                    message: "Login success",
+                    message: messageResponse.toJSON(),
                     statusCode: 200,
                     code: `auth/login-success`,
                     timestamp
@@ -519,8 +555,14 @@ class CustomerService {
             }
             cus.fcm = fcm;
             await cus.save();
+            let messageResponse = new MessageResponses();
+            const id = uuidv4();
+            messageResponse.setId(id);
+            messageResponse.setStatusCode(200);
+            messageResponse.setContent("add fcm success");
+            messageResponse.setCreatedAt(timestamp);
             return res.send({
-                message: "add fcm success",
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 code: `auth/add-fcm-success`,
                 timestamp

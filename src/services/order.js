@@ -121,7 +121,7 @@ class OrderService {
             let messageResponse = new MessageResponses();
             const id = uuidv4();
             messageResponse.setId(id);
-            messageResponse.setCode(200);
+            messageResponse.setStatusCode(200);
             messageResponse.setContent("create order success");
             messageResponse.setCreatedAt(timestamp);
             console.log(JSON.stringify(messageResponse.toJSON()));
@@ -280,7 +280,7 @@ class OrderService {
             let messageResponse = new MessageResponses();
             const id = uuidv4();
             messageResponse.setId(id);
-            messageResponse.setCode(200);
+            messageResponse.setStatusCode(200);
             messageResponse.setTitle(title);
             messageResponse.setContent(message);
             messageResponse.setImage(imageProduct);

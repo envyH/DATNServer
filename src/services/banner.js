@@ -26,12 +26,11 @@ class BannerService {
             let messageResponse = new MessageResponses();
             const id = uuidv4();
             messageResponse.setId(id);
-            messageResponse.setCode(200);
+            messageResponse.setStatusCode(200);
             messageResponse.setContent("get list banner success");
             messageResponse.setCreatedAt(timestamp);
-            console.log(JSON.stringify(messageResponse.toJSON()));
             return res.send({
-                message: messageResponse,
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 code: "banner/get-success",
                 banners: banner,

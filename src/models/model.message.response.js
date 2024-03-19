@@ -3,10 +3,19 @@ const BaseModel = require('./model.base');
 class MessageResponses extends BaseModel {
     constructor() {
         super();
-        let code = 400;
+        let statusCode = 400;
+        let code = '';
         let title = '';
         let content = '';
         let image = '';
+
+        this.getStatusCode = function () {
+            return statusCode;
+        }
+
+        this.setStatusCode = function (value) {
+            statusCode = value;
+        }
 
         this.getCode = function () {
             return code;
@@ -44,6 +53,7 @@ class MessageResponses extends BaseModel {
         this.toJSON = function () {
             return {
                 _id: this.getId(),
+                statusCode: this.getStatusCode(),
                 code: this.getCode(),
                 title: this.getTitle(),
                 content: this.getContent(),

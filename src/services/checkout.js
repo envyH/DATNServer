@@ -72,7 +72,7 @@ class CheckoutService {
             let messageResponse = new MessageResponses();
             const id = uuidv4();
             messageResponse.setId(id);
-            messageResponse.setCode(200);
+            messageResponse.setStatusCode(200);
             messageResponse.setContent("get product checkout success");
             messageResponse.setCreatedAt(timestamp);
             console.log(messageResponse.getContent());

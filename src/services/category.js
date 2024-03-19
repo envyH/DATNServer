@@ -26,12 +26,11 @@ class CategoryService {
             let messageResponse = new MessageResponses();
             const id = uuidv4();
             messageResponse.setId(id);
-            messageResponse.setCode(200);
+            messageResponse.setStatusCode(200);
             messageResponse.setContent("get list category success");
             messageResponse.setCreatedAt(timestamp);
-            console.log(messageResponse.getContent());
             return res.send({
-                message: messageResponse,
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 code: "category/get-success",
                 categories: category,
