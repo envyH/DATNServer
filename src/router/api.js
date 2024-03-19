@@ -10,6 +10,8 @@ const checkoutRouter = require('./checkout');
 const orderRouter = require('./order');
 const customerRouter = require('./customer');
 const authTokenRouter = require('./auth.token');
+const notificationRouter = require('./notification');
+
 
 router.use('/banner', bannerRouter);
 router.use('/category', categoryRouter);
@@ -19,6 +21,7 @@ router.use('/checkout', checkoutRouter);
 router.use('/order', orderRouter);
 router.use('/customer', customerRouter);
 router.use('/auth', authTokenRouter);
+router.use('/notification', notificationRouter);
 
 
 module.exports = router;

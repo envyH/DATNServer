@@ -367,25 +367,28 @@ class CustomerService {
         let email = req.body.email;
         let phoneNumer = req.body.phone_number;
         let password = req.body.password;
-        let token = req.body.token;
+        const token = req.header('Authorization');
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
         let messageResponseRequire = new MessageResponses();
-        let id = uuidv4();
+        const id = uuidv4();
         messageResponseRequire.setId(id);
         messageResponseRequire.setStatusCode(400);
         messageResponseRequire.setCreatedAt(timestamp);
 
         if (email === undefined || email.toString().trim().length == 0) {
+            messageResponseRequire.setCode("auth/missing-email");
             messageResponseRequire.setContent("email require");
             return res.send({ message: messageResponseRequire.toJSON(), statusCode: 400, code: "auth/missing-email", timestamp });
         }
         if (password === undefined || password.toString().trim().length == 0) {
+            messageResponseRequire.setCode("auth/missing-password");
             messageResponseRequire.setContent("password require");
             return res.send({ message: messageResponseRequire.toJSON(), statusCode: 400, code: "auth/missing-password", timestamp });
         }
         if (token === undefined || token.toString().trim().length == 0) {
+            messageResponseRequire.setCode("auth/missing-token");
             messageResponseRequire.setContent("token require");
             return res.send({ message: messageResponseRequire.toJSON(), statusCode: 400, code: "auth/missing-token", timestamp });
         }
@@ -409,22 +412,20 @@ class CustomerService {
                             timestamp
                         });
                     }
-                    let messageResponse = new MessageResponses();
-                    const id = uuidv4();
-                    messageResponse.setId(id);
-                    messageResponse.setStatusCode(400);
-                    messageResponse.setContent("wrong token");
-                    messageResponse.setCreatedAt(timestamp);
+                    messageResponseRequire.setCode(`auth/wrong-token`);
+                    messageResponseRequire.setContent("wrong token");
                     return res.send({
-                        message: messageResponse.toJSON(),
+                        message: messageResponseRequire.toJSON(),
                         statusCode: 400,
                         code: `auth/wrong-token`,
                         timestamp
                     });
                 }
                 else {
+                    messageResponseRequire.setCode(`auth/wrong-pass`);
+                    messageResponseRequire.setContent("wrong password");
                     return res.send({
-                        message: "Wrong password",
+                        message: messageResponseRequire.toJSON(),
                         statusCode: 400,
                         code: `auth/wrong-pass`,
                         timestamp
@@ -432,17 +433,21 @@ class CustomerService {
                 }
             }
             else {
+                messageResponseRequire.setCode(`auth/account-notexists`);
+                messageResponseRequire.setContent("Not exists");
                 return res.send({
-                    message: "Not exists",
+                    message: messageResponseRequire.toJSON(),
                     statusCode: 400,
                     code: `auth/account-notexists`,
                     timestamp
                 });
             }
         } catch (e) {
-            console.log(e.message);
+            console.log("checkLogin: ", e.message);
+            messageResponseRequire.setCode(`auth/${e.code}`);
+            messageResponseRequire.setContent(e.message.toString());
             return res.send({
-                message: e.message,
+                message: messageResponseRequire.toJSON(),
                 statusCode: 200,
                 code: `auth/${e.code}`,
                 timestamp

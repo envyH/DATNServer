@@ -124,7 +124,7 @@ class OrderService {
             messageResponse.setStatusCode(200);
             messageResponse.setContent("create order success");
             messageResponse.setCreatedAt(timestamp);
-            console.log(JSON.stringify(messageResponse.toJSON()));
+            // console.log(JSON.stringify(messageResponse.toJSON()));
 
             return res.send({
                 message: messageResponse.toJSON(),
@@ -244,13 +244,14 @@ class OrderService {
                 created_at: timestamp,
             });
 
+            let product;
             await Promise.all(productOrders.map(async productOrder => {
                 let detailOrder = new OrderDetailModel.orderDetailModel({
                     order_id: order._id,
                     product_id: productOrder.product_id,
                     quantity: productOrder.quantity_cart,
                 });
-                let product = await ProductModel.productModel.findById(productOrder.product_id);
+                product = await ProductModel.productModel.findById(productOrder.product_id);
                 let newQuantityProduct = parseInt(product.quantity) - parseInt(productOrder.quantity_cart);
                 product.quantity = newQuantityProduct;
                 if (newQuantityProduct === 0) {
@@ -266,7 +267,7 @@ class OrderService {
             await order.save();
 
             let customer = await CustomerModel.customerModel.findById(customerID);
-            let imageProduct = "product.image";
+            let imageProduct = product.img_cover;
             let title = "Đặt đơn hàng";
             let message = `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ZALOPAY với mã đơn hàng ${order._id}`;
             await NotificationService.createNotification(title, message, imageProduct, customer.fcm);
@@ -285,7 +286,7 @@ class OrderService {
             messageResponse.setContent(message);
             messageResponse.setImage(imageProduct);
             messageResponse.setCreatedAt(timestamp);
-            console.log(JSON.stringify(messageResponse.toJSON()));
+            // console.log(JSON.stringify(messageResponse.toJSON()));
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 200,

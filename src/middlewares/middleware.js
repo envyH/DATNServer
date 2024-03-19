@@ -21,6 +21,7 @@ exports.checkPermission = (req, res, next) => {
 
     if (!token) {
         messageResponse.setContent("wrong token");
+        messageResponse.setCode("auth/wrong-token");
         // console.log(JSON.stringify(messageResponse.toJSON()));
         return res.send({
             message: messageResponse.toJSON(),
@@ -37,7 +38,9 @@ exports.checkPermission = (req, res, next) => {
         }
     } catch (e) {
         console.log("middleware: ", e.message.toString());
+        console.log("middleware: ", e.error);
         messageResponse.setContent(e.message.toString());
+        messageResponse.setCode(e);
         // console.log(JSON.stringify(messageResponse.toJSON()));
         return res.send({
             message: messageResponse.toJSON(),

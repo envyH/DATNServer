@@ -13,7 +13,7 @@ const { STATUS_CART } = require('../utils/cart');
 const { PAYMENT_METHOD } = require('../utils/payment');
 
 
-async function getProductCart(customerID) {
+const getProductCart = async (customerID) => {
     let carts = await CartModel.cartModel.find({ customer_id: customerID }).lean();
     let dataProduct = [];
     await Promise.all(
@@ -75,9 +75,8 @@ class CheckoutService {
             messageResponse.setStatusCode(200);
             messageResponse.setContent("get product checkout success");
             messageResponse.setCreatedAt(timestamp);
-            console.log(messageResponse.getContent());
             return res.send({
-                message: messageResponse,
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 productCarts: mData,
                 code: "checkout/get-productcheckout-success",

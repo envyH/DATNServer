@@ -12,7 +12,7 @@ const MessageResponses = require('../models/model.message.response');
 const { STATUS_CART, checkStatusInCart } = require('../utils/cart');
 const { isNumber } = require('../utils/index');
 
-async function getProductCart(customerID) {
+const getProductCart = async (customerID) => {
     let carts = await CartModel.cartModel.find({ customer_id: customerID }).lean();
     let dataProduct = [];
     await Promise.all(

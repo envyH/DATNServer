@@ -29,9 +29,8 @@ class ProductService {
             messageResponse.setStatusCode(200);
             messageResponse.setContent("get list product success");
             messageResponse.setCreatedAt(timestamp);
-            console.log(messageResponse.getContent());
             return res.send({
-                message: messageResponse,
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 code: "product/get-success",
                 products: product,
