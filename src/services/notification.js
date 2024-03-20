@@ -35,7 +35,7 @@ class NotificationService {
             data: {
                 title: title,
                 body: content,
-                imageURL: img !== undefined ? img.toString().trim().length > 0  ? img : "" : "",
+                imageURL: img !== undefined ? img.toString().trim().length > 0 ? img : "" : "",
             },
             token: fcm,
         };
@@ -58,26 +58,28 @@ class NotificationService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        let messageResponseRequire = new MessageResponses();
+        let messageResponse = new MessageResponses();
         const id = uuidv4();
-        messageResponseRequire.setId(id);
-        messageResponseRequire.setStatusCode(400);
-        messageResponseRequire.setCreatedAt(timestamp);
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
 
         if (title === undefined || title.toString().trim().length == 0) {
-            messageResponseRequire.setCode("notification/missing-title");
-            messageResponseRequire.setContent("missing title");
-            return res.send({ message: messageResponseRequire.toJSON(), statusCode: 400, code: "notification/missing-title", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("notification/missing-title");
+            messageResponse.setContent("missing title");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "notification/missing-title", timestamp });
         }
         if (content === undefined || content.toString().trim().length == 0) {
-            messageResponseRequire.setCode("notification/missing-content");
-            messageResponseRequire.setContent("missing content");
-            return res.send({ message: messageResponseRequire.toJSON(), statusCode: 400, code: "notification/missing-content", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("notification/missing-content");
+            messageResponse.setContent("missing content");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "notification/missing-content", timestamp });
         }
         if (fcm === undefined || fcm.toString().trim().length == 0) {
-            messageResponseRequire.setCode("notification/missing-fcm");
-            messageResponseRequire.setContent("missing fcm");
-            return res.send({ message: messageResponseRequire.toJSON(), statusCode: 400, code: "notification/missing-fcm", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("notification/missing-fcm");
+            messageResponse.setContent("missing fcm");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "notification/missing-fcm", timestamp });
         }
 
         // create notification
@@ -94,22 +96,30 @@ class NotificationService {
             data: {
                 title: title,
                 body: content,
-                imageURL: img !== undefined ? img.toString().trim().length > 0  ? img : "" : "",
+                imageURL: img !== undefined ? img.toString().trim().length > 0 ? img : "" : "",
             },
             token: fcm,
         };
         admin.messaging().send(message)
             .then((response) => {
+                messageResponse.setStatusCode(200);
+                messageResponse.setCode("notification/send-success");
+                messageResponse.setContent(`Successfully sent message: ${response}`);
                 return res.send({
-                    message: `Successfully sent message: ${response}`,
+                    message: messageResponse.toJSON(),
                     statusCode: 200,
                     code: "notification/send-success",
                     timestamp
                 });
             })
             .catch((error) => {
+                console.log("==========createNotification2=========");
+                console.log(error);
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("notification/send-failed");
+                messageResponse.setContent(`Error sending message: ${error}`);
                 return res.send({
-                    message: `Error sending message: ${error}`,
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "notification/send-failed",
                     timestamp

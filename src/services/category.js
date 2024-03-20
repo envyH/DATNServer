@@ -17,18 +17,23 @@ class CategoryService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "Missing customerID", statusCode: 400, code: "auth/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("category/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "category/missing-customerid", timestamp });
         }
 
         try {
             let category = await CategoryModel.categoryModel.find().lean();
-            let messageResponse = new MessageResponses();
-            const id = uuidv4();
-            messageResponse.setId(id);
             messageResponse.setStatusCode(200);
+            messageResponse.setCode("category/get-success");
             messageResponse.setContent("get list category success");
-            messageResponse.setCreatedAt(timestamp);
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 200,
@@ -37,16 +42,20 @@ class CategoryService {
                 timestamp
             });
         } catch (e) {
-            console.log(e.message);
+            console.log("======getList========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("category/get-failed");
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "category/get-failed",
                 timestamp
             });
         }
     }
-
 
 }
 

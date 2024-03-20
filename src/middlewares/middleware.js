@@ -22,7 +22,7 @@ exports.checkPermission = (req, res, next) => {
     if (!token) {
         messageResponse.setContent("wrong token");
         messageResponse.setCode("auth/wrong-token");
-        // console.log(JSON.stringify(messageResponse.toJSON()));
+        console.log("middleware1", messageResponse.toJSON());
         return res.send({
             message: messageResponse.toJSON(),
             statusCode: 400,
@@ -37,11 +37,9 @@ exports.checkPermission = (req, res, next) => {
             next();
         }
     } catch (e) {
-        console.log("middleware: ", e.message.toString());
-        console.log("middleware: ", e.error);
-        messageResponse.setContent(e.message.toString());
-        messageResponse.setCode(e);
-        // console.log(JSON.stringify(messageResponse.toJSON()));
+        messageResponse.setContent(e.expiredAt.toString());
+        messageResponse.setCode(e.message.toString());
+        console.log("middleware2", messageResponse.toJSON());
         return res.send({
             message: messageResponse.toJSON(),
             statusCode: 400,

@@ -12,18 +12,27 @@ const MessageResponses = require('../models/model.message.response');
 const { STATUS_CART, checkStatusInCart } = require('../utils/cart');
 const { isNumber } = require('../utils/index');
 
-const getProductCart = async (customerID) => {
+const getProductCart = async (customerID, messageResponseID, timestamp) => {
     let carts = await CartModel.cartModel.find({ customer_id: customerID }).lean();
     let dataProduct = [];
+
+    let messageResponse = new MessageResponses();
+    messageResponse.setId(messageResponseID);
+    messageResponse.setCreatedAt(timestamp);
+
     await Promise.all(
         carts.map(async (cart) => {
             try {
                 let prodductInfo = await ProductModel.productModel.findById(cart.product_id).lean();
                 dataProduct.push(prodductInfo);
             } catch (e) {
-                console.log(e.message);
+                console.log("=======getProductCart=========");
+                console.log(e.message.toString());
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("cart/getproductinfo-failed");
+                messageResponse.setContent(e.message.toString());
                 return res.send({
-                    message: e.message.toString(),
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "cart/getproductinfo-failed",
                     timestamp
@@ -83,14 +92,29 @@ class CartService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-customerid", timestamp });
         }
         if (productID === undefined || productID.toString().trim().length == 0) {
-            return res.send({ message: "missing productID", statusCode: 400, code: "cart/missing-productid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-productid");
+            messageResponse.setContent("Missing productID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-productid", timestamp });
         }
         if (mQuantity === undefined || parseInt(mQuantity) == 0) {
-            return res.send({ message: "missing quantity", statusCode: 400, code: "cart/missing-quantity", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-quantity");
+            messageResponse.setContent("Missing quantity");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-quantity", timestamp });
         }
 
         try {
@@ -101,8 +125,11 @@ class CartService {
             };
             let product = await ProductModel.productModel.findById(productID);
             if (parseInt(product.quantity) <= 0) {
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("cart/product-is-temporarily-out-of-stock");
+                messageResponse.setContent("The product is temporarily out of stock and cannot be ordered.");
                 return res.send({
-                    message: "The product is temporarily out of stock and cannot be ordered",
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "cart/product-is-temporarily-out-of-stock",
                     timestamp
@@ -113,8 +140,11 @@ class CartService {
             if (cart) {
                 newQuantity = parseInt(cart.quantity) + parseInt(mQuantity);
                 if (newQuantity > parseInt(product.quantity)) {
+                    messageResponse.setStatusCode(400);
+                    messageResponse.setCode("cart/update-quantity-failed");
+                    messageResponse.setContent("Product quantity exceeds the limit.");
                     return res.send({
-                        message: "product quantity exceeds the limit",
+                        message: messageResponse.toJSON(),
                         statusCode: 400,
                         code: "cart/update-quantity-failed",
                         timestamp
@@ -125,8 +155,11 @@ class CartService {
             if (cart) {
                 // TODO update quantity
                 await CartModel.cartModel.findOneAndUpdate(filter, update);
+                messageResponse.setStatusCode(200);
+                messageResponse.setCode("cart/update-quantity-success");
+                messageResponse.setContent("Update quantity success.");
                 return res.send({
-                    message: "update quantity success",
+                    message: messageResponse.toJSON(),
                     statusCode: 200,
                     code: "cart/update-quantity-success",
                     timestamp
@@ -142,12 +175,10 @@ class CartService {
                     created_at: timestamp,
                 });
                 await cart.save();
-                let messageResponse = new MessageResponses();
-                const id = uuidv4();
-                messageResponse.setId(id);
+
                 messageResponse.setStatusCode(200);
+                messageResponse.setCode("cart/add-success");
                 messageResponse.setContent("add to cart success");
-                messageResponse.setCreatedAt(timestamp);
                 return res.send({
                     message: messageResponse.toJSON(),
                     statusCode: 200,
@@ -156,9 +187,14 @@ class CartService {
                 });
             }
         } catch (e) {
-            console.log(e.message);
+            console.log("========addToCart=========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/add-failed");
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "cart/add-failed",
                 timestamp
@@ -166,24 +202,28 @@ class CartService {
         }
     }
 
-
     getByCustomerID = async (req, res) => {
         const customerID = req.body.customerID;
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-customerid", timestamp });
         }
         try {
-            let mData = await getProductCart(customerID);
+            let mData = await getProductCart(customerID, id, timestamp);
             // console.log(mData);
-            let messageResponse = new MessageResponses();
-            const id = uuidv4();
-            messageResponse.setId(id);
             messageResponse.setStatusCode(200);
-            messageResponse.setContent("get data cart success");
-            messageResponse.setCreatedAt(timestamp);
+            messageResponse.setCode("cart/getbycustomerid-success");
+            messageResponse.setContent("Get data cart success.");
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 200,
@@ -192,15 +232,19 @@ class CartService {
                 timestamp
             });
         } catch (e) {
-            console.log(e.message);
+            console.log("========getByCustomerID==========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/getbycustomerid-failed");
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "cart/getbycustomerid-failed",
                 timestamp
             });
         }
-
     }
 
     updateQuanity = async (req, res) => {
@@ -211,22 +255,42 @@ class CartService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-customerid", timestamp });
         }
         if (cartID === undefined || cartID.toString().trim().length == 0) {
-            return res.send({ message: "missing cartID", statusCode: 400, code: "cart/missing-cartid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-cartid");
+            messageResponse.setContent("Missing cartID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-cartid", timestamp });
         }
         if (type === undefined || type.toString().trim().length == 0) {
-            return res.send({ message: "missing type", statusCode: 400, code: "cart/missing-type", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-type");
+            messageResponse.setContent("Missing type");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-type", timestamp });
         }
         if (mQuantity === undefined || parseInt(mQuantity) <= 0) {
-            return res.send({ message: "missing quantity", statusCode: 400, code: "cart/missing-quantity", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-quantity");
+            messageResponse.setContent("Missing quantity");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-quantity", timestamp });
         }
         let isNumberType = isNumber(mQuantity);
         if (!isNumberType) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/quantity-nan");
+            messageResponse.setContent("Quantity not a number.");
             return res.send({
-                message: "quantity not a number",
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 productCarts: [],
                 code: "cart/quantity-nan",
@@ -243,8 +307,11 @@ class CartService {
                     if (newQuantity + quantityValue <= parseInt(dataProduct.quantity)) {
                         newQuantity += quantityValue;
                     } else {
+                        messageResponse.setStatusCode(400);
+                        messageResponse.setCode("cart/plus-not-change");
+                        messageResponse.setContent("Plus not change.");
                         return res.send({
-                            message: "plus not change",
+                            message: messageResponse.toJSON(),
                             statusCode: 400,
                             code: "cart/plus-not-change",
                             timestamp
@@ -254,8 +321,11 @@ class CartService {
                     if (newQuantity > quantityValue) {
                         newQuantity -= quantityValue;
                     } else {
+                        messageResponse.setStatusCode(400);
+                        messageResponse.setCode("cart/minus-not-change");
+                        messageResponse.setContent("Minus not change.");
                         return res.send({
-                            message: "minus not change",
+                            message: messageResponse.toJSON(),
                             statusCode: 400,
                             code: "cart/minus-not-change",
                             timestamp
@@ -263,9 +333,12 @@ class CartService {
                     }
                 }
                 await CartModel.cartModel.findByIdAndUpdate(cartID, { quantity: newQuantity.toString() });
-                let mData = await getProductCart(customerID);
+                let mData = await getProductCart(customerID, id, timestamp);
+                messageResponse.setStatusCode(200);
+                messageResponse.setCode("cart/update-quantity-success");
+                messageResponse.setContent("Update quantity success.");
                 return res.send({
-                    message: "update quantity success",
+                    message: messageResponse.toJSON(),
                     statusCode: 200,
                     productCarts: mData,
                     code: "cart/update-quantity-success",
@@ -273,15 +346,21 @@ class CartService {
                 });
             }
         } catch (e) {
-            console.log(e.message);
+            console.log("========updateQuanity========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/update-quantity-failed");
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "cart/update-quantity-failed",
                 timestamp
             });
         }
     }
+
     updateStatus = async (req, res) => {
         let cartID = req.body.cartID;
         let customerID = req.body.customerID;
@@ -289,20 +368,37 @@ class CartService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-customerid", timestamp });
         }
         if (cartID === undefined || cartID.toString().trim().length == 0) {
-            return res.send({ message: "missing cartID", statusCode: 400, code: "cart/missing-cartid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-cartid");
+            messageResponse.setContent("Missing cartID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-cartid", timestamp });
         }
         if (status === undefined) {
-            return res.send({ message: "missing status", statusCode: 400, code: "cart/missing-status", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-status");
+            messageResponse.setContent("Missing status");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-status", timestamp });
         }
 
         let isNumberType = isNumber(status);
         if (!isNumberType) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/status-invalid-type");
+            messageResponse.setContent("Status invalid type.");
             return res.send({
-                message: "status invalid type",
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "cart/status-invalid-type",
                 timestamp
@@ -311,8 +407,11 @@ class CartService {
         let statusValue = parseInt(status);
         let isValidStatus = checkStatusInCart(statusValue);
         if (!isValidStatus) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/status-invalid-value");
+            messageResponse.setContent("Status invalid value.");
             return res.send({
-                message: "status invalid value",
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "cart/status-invalid-value",
                 timestamp
@@ -321,13 +420,10 @@ class CartService {
 
         try {
             await CartModel.cartModel.findByIdAndUpdate(cartID, { status: statusValue });
-            let mData = await getProductCart(customerID);
-            let messageResponse = new MessageResponses();
-            const id = uuidv4();
-            messageResponse.setId(id);
+            let mData = await getProductCart(customerID, id, timestamp);
             messageResponse.setStatusCode(200);
-            messageResponse.setContent("update status cart success");
-            messageResponse.setCreatedAt(timestamp);
+            messageResponse.setCode("cart/update-status-success");
+            messageResponse.setContent("Update status cart success.");
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 200,
@@ -336,9 +432,14 @@ class CartService {
                 timestamp
             });
         } catch (e) {
-            console.log(e.message);
+            console.log("=======updateStatus==========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/update-status-failed");
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "cart/update-status-failed",
                 timestamp
@@ -352,16 +453,30 @@ class CartService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-customerid", timestamp });
         }
         if (isSelected === undefined || isSelected.toString().trim().length == 0) {
-            return res.send({ message: "missing isSelected", statusCode: 400, code: "cart/missing-isSelected", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-isSelected");
+            messageResponse.setContent("Missing isSelected");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-isSelected", timestamp });
         }
 
         if (isSelected !== 'true' && isSelected !== 'false') {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/update-status-all-failed");
+            messageResponse.setContent("isSelected invalid type.");
             return res.send({
-                message: "isSelected invalid type",
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "cart/update-status-all-failed",
                 timestamp
@@ -381,18 +496,26 @@ class CartService {
                 // console.log(dataCart.matchedCount);
                 // console.log(dataCart.modifiedCount);
             }
-            let mData = await getProductCart(customerID);
+            let mData = await getProductCart(customerID, id, timestamp);
+            messageResponse.setStatusCode(200);
+            messageResponse.setCode("cart/update-all-status-success");
+            messageResponse.setContent("Update all status cart success.");
             return res.send({
-                message: "update all status cart success",
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 productCarts: mData,
                 code: "cart/update-all-status-success",
                 timestamp
             });
         } catch (e) {
-            console.log(e.message);
+            console.log("=========updateStatusAll==========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/update-status-all-failed");
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "cart/update-status-all-failed",
                 timestamp
@@ -408,19 +531,33 @@ class CartService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-customerid", timestamp });
         }
         if (productID === undefined || productID.toString().trim().length == 0) {
-            return res.send({ message: "missing productID", statusCode: 400, code: "cart/missing-productid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-productid");
+            messageResponse.setContent("Missing productID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-productid", timestamp });
         }
 
         try {
             let product = await ProductModel.productModel.findById(productID).lean();
             let isNumberType = isNumber(quantity);
             if (!isNumberType) {
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("cart/quantity-invalid-type");
+                messageResponse.setContent("Quantity invalid type.");
                 return res.send({
-                    message: "quantity invalid type",
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "cart/quantity-invalid-type",
                     timestamp
@@ -440,17 +577,25 @@ class CartService {
                 status_cart: STATUS_CART.BUYING.value
             }
             mData.push(dataProductCart);
+            messageResponse.setStatusCode(200);
+            messageResponse.setCode("cart/create-buy-now-success");
+            messageResponse.setContent("Create buy now success.");
             return res.send({
-                message: "create buy now success",
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 productCarts: mData,
                 code: "cart/create-buy-now-success",
                 timestamp
             });
         } catch (e) {
-            console.log(e.message);
+            console.log("============buyNow===========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/buy-now-failed");
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "cart/buy-now-failed",
                 timestamp
@@ -464,11 +609,22 @@ class CartService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "missing customerID", statusCode: 400, code: "cart/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-customerid", timestamp });
         }
         if (cartID === undefined || cartID.toString().trim().length == 0) {
-            return res.send({ message: "missing cartID", statusCode: 400, code: "cart/missing-cartid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/missing-cartid");
+            messageResponse.setContent("Missing cartID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "cart/missing-cartid", timestamp });
         }
         try {
             await CartModel.cartModel.findByIdAndUpdate(cartID, { status: STATUS_CART.SELECTED.value });
@@ -488,24 +644,32 @@ class CartService {
                 status_cart: STATUS_CART.BUYING.value
             }
             mData.push(dataProductCart);
+
+            messageResponse.setStatusCode(200);
+            messageResponse.setCode("cart/create-buy-now-cart-success");
+            messageResponse.setContent("Create buy now cart success.");
             return res.send({
-                message: "create buy now cart success",
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 productCarts: mData,
                 code: "cart/create-buy-now-cart-success",
                 timestamp
             });
         } catch (e) {
-            console.log(e.message);
+            console.log("===========buyNowCart============");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("cart/buy-now-cart-failed");
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "cart/buy-now-cart-failed",
                 timestamp
             });
         }
     }
-
 
 }
 

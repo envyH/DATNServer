@@ -13,18 +13,27 @@ const { STATUS_CART } = require('../utils/cart');
 const { PAYMENT_METHOD } = require('../utils/payment');
 
 
-const getProductCart = async (customerID) => {
+const getProductCart = async (customerID, messageResponseID, timestamp) => {
     let carts = await CartModel.cartModel.find({ customer_id: customerID }).lean();
     let dataProduct = [];
+
+    let messageResponse = new MessageResponses();
+    messageResponse.setId(messageResponseID);
+    messageResponse.setCreatedAt(timestamp);
+
     await Promise.all(
         carts.map(async (cart) => {
             try {
                 let prodductInfo = await ProductModel.productModel.findById(cart.product_id).lean();
                 dataProduct.push(prodductInfo);
             } catch (e) {
-                console.log(e.message);
+                console.log(e.message.toString());
+                console.log(e.code.toString());
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("cart/getproductinfo-failed");
+                messageResponse.setContent(e.message.toString());
                 return res.send({
-                    message: e.message.toString(),
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "cart/getproductinfo-failed",
                     timestamp
@@ -62,19 +71,24 @@ class CheckoutService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "missing customerID", statusCode: 400, code: "checkout/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("checkout/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "checkout/missing-customerid", timestamp });
         }
 
         try {
-            let mData = await getProductCart(customerID);
+            let mData = await getProductCart(customerID, id, timestamp);
             // console.log(mData);
-            let messageResponse = new MessageResponses();
-            const id = uuidv4();
-            messageResponse.setId(id);
             messageResponse.setStatusCode(200);
+            messageResponse.setCode("checkout/get-productcheckout-success");
             messageResponse.setContent("get product checkout success");
-            messageResponse.setCreatedAt(timestamp);
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 200,
@@ -83,9 +97,14 @@ class CheckoutService {
                 timestamp
             });
         } catch (e) {
-            console.log(e.message);
+            console.log("=========getProductCheckout=========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("checkout/get-productcheckout-success");
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "checkout/get-productcheckout-failed",
                 timestamp
@@ -98,8 +117,16 @@ class CheckoutService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "missing customerID", statusCode: 400, code: "checkout/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("checkout/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "checkout/missing-customerid", timestamp });
         }
 
         try {
@@ -112,17 +139,25 @@ class CheckoutService {
             paymentMethod.forEach((value, key) => {
                 paymentMethodObject[key] = value;
             });
+            messageResponse.setStatusCode(200);
+            messageResponse.setCode("checkout/get-payment-method-success");
+            messageResponse.setContent("Get payment method success.");
             return res.send({
-                message: "get payment method success",
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 paymentMethod: paymentMethodObject,
                 code: "checkout/get-payment-method-success",
                 timestamp
             });
         } catch (e) {
-            console.log(e.message);
+            console.log("=========getPaymentMethod===========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("checkout/get-payment-method-failed");
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "checkout/get-payment-method-failed",
                 timestamp

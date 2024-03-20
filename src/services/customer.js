@@ -35,22 +35,38 @@ class CustomerService {
         let portLocal = process.env.PORT;
 
 
+        let messageResponseError = new MessageResponses();
+        const id = uuidv4();
+        messageResponseError.setId(id);
+        messageResponseError.setStatusCode(400);
+        messageResponseError.setCreatedAt(timestamp);
+
         if (email === undefined || email.toString().trim().length == 0) {
-            return res.send({ message: "missing emai", statusCode: 400, code: "auth/missing-email", timestamp });
+            messageResponseError.setCode("auth/missing-email");
+            messageResponseError.setContent("missing email");
+            return res.send({ message: messageResponseError.toJSON(), statusCode: 400, code: "auth/missing-email", timestamp });
         }
         if (password === undefined || password.toString().trim().length == 0) {
-            return res.send({ message: "missing password", statusCode: 400, code: "auth/missing-password", timestamp });
+            messageResponseError.setCode("auth/missing-password");
+            messageResponseError.setContent("missing password");
+            return res.send({ message: messageResponseError.toJSON(), statusCode: 400, code: "auth/missing-password", timestamp });
         }
         if (fullName === undefined || fullName.toString().trim().length == 0) {
-            return res.send({ message: "missing full-name", statusCode: 400, code: "auth/missing-fullname", timestamp });
+            messageResponseError.setCode("auth/missing-fullname");
+            messageResponseError.setContent("missing full-name");
+            return res.send({ message: messageResponseError.toJSON(), statusCode: 400, code: "auth/missing-fullname", timestamp });
         }
         if (phoneNumber === undefined || phoneNumber.toString().trim().length == 0) {
-            return res.send({ message: "missing phone-number", statusCode: 400, code: "auth/missing-phonenumber", timestamp });
+            messageResponseError.setCode("auth/missing-phonenumber");
+            messageResponseError.setContent("missing phone-number");
+            return res.send({ message: messageResponseError.toJSON(), statusCode: 400, code: "auth/missing-phonenumber", timestamp });
         }
 
         if (!phoneNumberRegex.test(phoneNumber)) {
+            messageResponseError.setCode("auth/non-valid-phonenumber");
+            messageResponseError.setContent("The phone number is not in the correct format");
             return res.send({
-                message: "The phone number is not in the correct format",
+                message: messageResponseError.toJSON(),
                 statusCode: 400,
                 code: "auth/non-valid-phonenumber",
                 timestamp
@@ -58,9 +74,10 @@ class CustomerService {
         }
 
         if (!passwordRegex.test(password)) {
+            messageResponseError.setCode("auth/non-valid-password");
+            messageResponseError.setContent("Minimum password 8 characters, at least 1 capital letter, 1 number and 1 special character");
             return res.send({
-                message:
-                    "Minimum password 8 characters, at least 1 capital letter, 1 number and 1 special character",
+                message: messageResponseError.toJSON(),
                 statusCode: 400,
                 code: "auth/non-valid-password",
                 timestamp
@@ -72,8 +89,10 @@ class CustomerService {
             let cusByPhone = await CustomerModel.customerModel.findOne({ phone_number: phoneNumber, }).lean();
             let cusByEmail = await CustomerModel.customerModel.findOne({ email: email }).lean();
             if (cusByPhone) {
+                messageResponseError.setCode("auth/phone-exists");
+                messageResponseError.setContent("This phone number is registered to another account");
                 return res.send({
-                    message: "This phone number is registered to another account",
+                    message: messageResponseError.toJSON(),
                     statusCode: 400,
                     code: "auth/phone-exists",
                     timestamp
@@ -86,22 +105,28 @@ class CustomerService {
                     const text = `STECH xin chào bạn\nẤn vào đây để xác thực tài khoản: ${link}`;
                     let index = OTPService.sendEmailVerifyCus(email, text);
                     if (index === 0) {
+                        messageResponseError.setCode("auth/unsend-mail");
+                        messageResponseError.setContent("Send verify account fail");
                         return res.send({
-                            message: "send verify account fail",
+                            message: messageResponseError.toJSON(),
                             statusCode: 400,
                             code: "auth/unsend-mail",
                             timestamp
                         });
                     }
+                    messageResponseError.setCode("auth/account-exists");
+                    messageResponseError.setContent("Account has been registered\nPlease verify your account in email!");
                     return res.send({
-                        message: "Account has been registered\nPlease verify your account in email!",
+                        message: messageResponseError.toJSON(),
                         statusCode: 400,
                         code: "auth/account-exists",
                         timestamp
                     })
                 }
+                messageResponseError.setCode("auth/email-exists");
+                messageResponseError.setContent("This email is registered to another account");
                 return res.send({
-                    message: "This email is registered to another account",
+                    message: messageResponseError.toJSON(),
                     statusCode: 400,
                     code: "auth/email-exists",
                     timestamp
@@ -146,8 +171,10 @@ class CustomerService {
             const text = `STECH xin chào bạn\nẤn vào đây để xác thực tài khoản: ${link}`;
             let index = OTPService.sendEmailVerifyCus(email, text);
             if (index === 0) {
+                messageResponseError.setCode("auth/unsend-mail");
+                messageResponseError.setContent("Send verify account fail.");
                 return res.send({
-                    message: "send verify account fail",
+                    message: messageResponseError.toJSON(),
                     statusCode: 400,
                     code: "auth/unsend-mail",
                     timestamp
@@ -156,17 +183,28 @@ class CustomerService {
                 await cus.save();
             }
             cus.password = password;
+            let messageResponse = new MessageResponses();
+            let id = uuidv4();
+            messageResponse.setId(id);
+            messageResponse.setStatusCode(200);
+            messageResponse.setCode("auth/verify");
+            messageResponse.setContent("Register success!\nPlease verify your account in email.");
+            messageResponse.setCreatedAt(timestamp);
             return res.send({
                 customer: cus,
-                message: "Register success!\nPlease verify your account in email.",
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 code: "auth/verify",
                 timestamp
             });
         } catch (e) {
+            console.log("===========register==========");
             console.log(e.message);
+            console.log(e.code);
+            messageResponseError.setCode(`auth/${e.code}`);
+            messageResponseError.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponseError.toJSON(),
                 statusCode: 400,
                 code: `auth/${e.code}`,
                 timestamp
@@ -180,6 +218,12 @@ class CustomerService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
+
         try {
             let cus = await CustomerModel.customerModel.findById(key);
             if (cus) {
@@ -189,23 +233,34 @@ class CustomerService {
                     await CustomerModel.customerModel.deleteMany({ phone_number: cus.phone_number, status: "Not verified" });
                 }
             } else {
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("auth/active-fail");
+                messageResponse.setContent("Activation failed.");
                 return res.send({
-                    message: "Activation failed",
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "auth/active-fail",
                     timestamp
                 });
             }
+            messageResponse.setStatusCode(200);
+            messageResponse.setCode("auth/activated");
+            messageResponse.setContent("Has been activated.");
             return res.send({
-                message: "Has been activated",
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 code: "auth/activated",
                 timestamp
             });
         } catch (e) {
-            console.log(e.message);
+            console.log("=========verify=========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode(e.code.toString());
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: `auth/${e.code}`,
                 timestamp
@@ -220,11 +275,22 @@ class CustomerService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         if (email === undefined || email.toString().trim().length == 0) {
-            return res.send({ message: "email require", statusCode: 400, code: "auth/missing-email", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/missing-email");
+            messageResponse.setContent("email require");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "auth/missing-email", timestamp });
         }
         if (password === undefined || password.toString().trim().length == 0) {
-            return res.send({ message: "password require", statusCode: 400, code: "auth/missing-password", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/missing-password");
+            messageResponse.setContent("password require");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "auth/missing-password", timestamp });
         }
 
 
@@ -232,28 +298,36 @@ class CustomerService {
             let cusEmail = await CustomerModel.customerModel.findOne({ email: email });
             let cusPhone = await CustomerModel.customerModel.findOne({ phone_number: phoneNumer });
             if (!cusEmail && !cusPhone) {
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("auth/account-notexist");
+                messageResponse.setContent("Login failed: Account does not exist.");
                 return res.send({
-                    message: "Login failed: Account does not exist",
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "auth/account-notexist",
                     timestamp
                 });
             }
 
-
             if (cusPhone) {
                 const match = await bcrypt.compare(password, cusPhone.password);
                 if (!match) {
+                    messageResponse.setStatusCode(400);
+                    messageResponse.setCode("auth/incorrect-password");
+                    messageResponse.setContent("Incorrect password.");
                     return res.send({
-                        message: "Incorrect password.",
+                        message: messageResponse.toJSON(),
                         statusCode: 400,
                         code: "auth/incorrect-password",
                         timestamp
                     });
                 }
                 if (cusPhone.status !== "Has been activated") {
+                    messageResponse.setStatusCode(400);
+                    messageResponse.setCode("auth/no-verify");
+                    messageResponse.setContent("Your account has not been activated or has been locked, please contact hotline 0999999999 for help.");
                     return res.send({
-                        message: "Your account has not been activated or has been locked, please contact hotline 0999999999 for help.",
+                        message: messageResponse.toJSON(),
                         statusCode: 400,
                         code: "auth/no-verify",
                         timestamp
@@ -263,8 +337,9 @@ class CustomerService {
                 const apiKey = process.env.API_KEY_INFOBIP;
                 const baseUrl = process.env.BASE_URL_INFOBIP;
                 const text = `STECH xin chào bạn\nMã OTP của bạn là: ${otp}\nVui lòng không cung cấp mã OTP cho bất kì ai`;
-                const to = formatPhoneNumber(cusPhone.phone_number);
-                console.log(to)
+                const formatPhoneNumber = formatPhoneNumber(cusPhone.phone_number);
+                console.log("=========login=========");
+                console.log(formatPhoneNumber)
                 const headers = {
                     Authorization: `App ${apiKey}`,
                     "Content-Type": "application/json",
@@ -273,7 +348,7 @@ class CustomerService {
                 const payload = {
                     messages: [
                         {
-                            destinations: [{ to }],
+                            destinations: [{ formatPhoneNumber }],
                             text,
                         },
                     ],
@@ -283,11 +358,15 @@ class CustomerService {
                 axios
                     .post(baseUrl, payload, { headers })
                     .then(async (response) => {
+                        console.log("=========login=========");
                         console.log('Axios Response:', response.data);
                         cusPhone.otp = otp;
                         await cusPhone.save();
+                        messageResponse.setStatusCode(200);
+                        messageResponse.setCode("auth/verify-phone");
+                        messageResponse.setContent("Please verify your account.");
                         return res.send({
-                            message: "Please verify your account",
+                            message: messageResponse.toJSON(),
                             id: cusPhone._id,
                             customer: cusPhone,
                             statusCode: 200,
@@ -296,11 +375,16 @@ class CustomerService {
                         });
                     })
                     .catch((error) => {
-                        console.error(error.message);
+                        console.log("=========login=========");
+                        console.error(error.message.toString());
+                        console.error(error.code.toString());
+                        messageResponse.setStatusCode(400);
+                        messageResponse.setCode(`auth/${error.code.toString()}`);
+                        messageResponse.setContent("Fail send code.");
                         return res.send({
-                            message: "Fail send code",
+                            message: messageResponse.toJSON(),
                             statusCode: 400,
-                            code: `auth/${error.code}`,
+                            code: `auth/${error.code.toString()}`,
                             timestamp
                         });
                     });
@@ -309,16 +393,22 @@ class CustomerService {
             if (cusEmail) {
                 const match = await bcrypt.compare(password, cusEmail.password);
                 if (!match) {
+                    messageResponse.setStatusCode(400);
+                    messageResponse.setCode(`auth/incorrect-password`);
+                    messageResponse.setContent("Incorrect password.");
                     return res.send({
-                        message: "Incorrect password.",
+                        message: messageResponse.toJSON(),
                         statusCode: 400,
                         code: "auth/incorrect-password",
                         timestamp
                     });
                 }
                 if (cusEmail.status !== "Has been activated") {
+                    messageResponse.setStatusCode(400);
+                    messageResponse.setCode(`auth/no-verify`);
+                    messageResponse.setContent("Your account has not been activated or has been locked, please contact Email: datnstech@gmail.com for help.");
                     return res.send({
-                        message: "Your account has not been activated or has been locked, please contact Email: datnstech@gmail.com for help.",
+                        message: messageResponse.toJSON(),
                         statusCode: 400,
                         code: "auth/no-verify",
                         timestamp
@@ -326,8 +416,11 @@ class CustomerService {
                 }
                 let otp = await OTPService.sendOTPByEmail(cusEmail.email);
                 if (otp === 0) {
+                    messageResponse.setStatusCode(400);
+                    messageResponse.setCode(`auth/verify-failed`);
+                    messageResponse.setContent("Verify customer failed.");
                     return res.send({
-                        message: "Verify customer failed",
+                        message: messageResponse.toJSON(),
                         statusCode: 400,
                         code: "auth/verify-failed",
                         timestamp
@@ -336,12 +429,10 @@ class CustomerService {
                     cusEmail.otp = otp;
                     await cusEmail.save();
                     cusEmail.password = password;
-                    let messageResponse = new MessageResponses();
-                    const id = uuidv4();
-                    messageResponse.setId(id);
+
                     messageResponse.setStatusCode(200);
+                    messageResponse.getCode("auth/verify");
                     messageResponse.setContent("Please verify your account");
-                    messageResponse.setCreatedAt(timestamp);
                     return res.send({
                         message: messageResponse.toJSON(),
                         id: cusEmail._id,
@@ -353,11 +444,16 @@ class CustomerService {
                 }
             }
         } catch (e) {
-            console.log(e.message);
+            console.log("=========login=========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.getCode(`auth/${e.code.toString()}`);
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
-                code: `auth/${e.code}`,
+                code: `auth/${e.code.toString()}`,
                 timestamp
             });
         }
@@ -371,26 +467,28 @@ class CustomerService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
-        let messageResponseRequire = new MessageResponses();
+        let messageResponse = new MessageResponses();
         const id = uuidv4();
-        messageResponseRequire.setId(id);
-        messageResponseRequire.setStatusCode(400);
-        messageResponseRequire.setCreatedAt(timestamp);
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
 
         if (email === undefined || email.toString().trim().length == 0) {
-            messageResponseRequire.setCode("auth/missing-email");
-            messageResponseRequire.setContent("email require");
-            return res.send({ message: messageResponseRequire.toJSON(), statusCode: 400, code: "auth/missing-email", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/missing-email");
+            messageResponse.setContent("email require");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "auth/missing-email", timestamp });
         }
         if (password === undefined || password.toString().trim().length == 0) {
-            messageResponseRequire.setCode("auth/missing-password");
-            messageResponseRequire.setContent("password require");
-            return res.send({ message: messageResponseRequire.toJSON(), statusCode: 400, code: "auth/missing-password", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/missing-password");
+            messageResponse.setContent("password require");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "auth/missing-password", timestamp });
         }
         if (token === undefined || token.toString().trim().length == 0) {
-            messageResponseRequire.setCode("auth/missing-token");
-            messageResponseRequire.setContent("token require");
-            return res.send({ message: messageResponseRequire.toJSON(), statusCode: 400, code: "auth/missing-token", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/missing-token");
+            messageResponse.setContent("token require");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "auth/missing-token", timestamp });
         }
 
         try {
@@ -400,11 +498,9 @@ class CustomerService {
                 if (match) {
                     let authToken = await AuthTokenModel.authTokenModel.findOne({ customer_id: cusEmail._id });
                     if (authToken && authToken.token === token) {
-                        let messageResponse = new MessageResponses();
-                        const id = uuidv4();
-                        messageResponse.setId(id);
                         messageResponse.setStatusCode(200);
-                        messageResponse.setCreatedAt(timestamp);
+                        messageResponse.setCode(`auth/200`);
+                        messageResponse.setContent("Check success.");
                         return res.send({
                             message: messageResponse.toJSON(),
                             statusCode: 200,
@@ -412,20 +508,22 @@ class CustomerService {
                             timestamp
                         });
                     }
-                    messageResponseRequire.setCode(`auth/wrong-token`);
-                    messageResponseRequire.setContent("wrong token");
+                    messageResponse.setStatusCode(400);
+                    messageResponse.setCode(`auth/wrong-token`);
+                    messageResponse.setContent("wrong token");
                     return res.send({
-                        message: messageResponseRequire.toJSON(),
+                        message: messageResponse.toJSON(),
                         statusCode: 400,
                         code: `auth/wrong-token`,
                         timestamp
                     });
                 }
                 else {
-                    messageResponseRequire.setCode(`auth/wrong-pass`);
-                    messageResponseRequire.setContent("wrong password");
+                    messageResponse.setStatusCode(400);
+                    messageResponse.setCode(`auth/wrong-pass`);
+                    messageResponse.setContent("wrong password");
                     return res.send({
-                        message: messageResponseRequire.toJSON(),
+                        message: messageResponse.toJSON(),
                         statusCode: 400,
                         code: `auth/wrong-pass`,
                         timestamp
@@ -433,23 +531,26 @@ class CustomerService {
                 }
             }
             else {
-                messageResponseRequire.setCode(`auth/account-notexists`);
-                messageResponseRequire.setContent("Not exists");
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode(`auth/account-notexists`);
+                messageResponse.setContent("Not exists");
                 return res.send({
-                    message: messageResponseRequire.toJSON(),
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: `auth/account-notexists`,
                     timestamp
                 });
             }
         } catch (e) {
-            console.log("checkLogin: ", e.message);
-            messageResponseRequire.setCode(`auth/${e.code}`);
-            messageResponseRequire.setContent(e.message.toString());
+            console.log("=========checkLogin=========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setCode(`auth/${e.code.toString()}`);
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: messageResponseRequire.toJSON(),
+                message: messageResponse.toJSON(),
                 statusCode: 200,
-                code: `auth/${e.code}`,
+                code: `auth/${e.code.toString()}`,
                 timestamp
             });
         }
@@ -462,14 +563,29 @@ class CustomerService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "customerID require", statusCode: 400, code: "auth/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/missing-customerid");
+            messageResponse.setContent("customerID require");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "auth/missing-customerid", timestamp });
         }
         if (password === undefined || password.toString().trim().length == 0) {
-            return res.send({ message: "password require", statusCode: 400, code: "auth/missing-password", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/missing-password");
+            messageResponse.setContent("password require");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "auth/missing-password", timestamp });
         }
         if (otp === undefined || otp.toString().trim().length == 0) {
-            return res.send({ message: "otp require", statusCode: 400, code: "auth/missing-otp", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/missing-otp");
+            messageResponse.setContent("otp require");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "auth/missing-otp", timestamp });
         }
         try {
             let customer = await CustomerModel.customerModel.findOne({ _id: customerID, otp: otp })
@@ -503,12 +619,10 @@ class CustomerService {
                 customer.otp = null;
                 await customer.save();
                 customer.password = password;
-                let messageResponse = new MessageResponses();
-                const id = uuidv4();
-                messageResponse.setId(id);
+
                 messageResponse.setStatusCode(200);
-                messageResponse.setContent("Login success");
-                messageResponse.setCreatedAt(timestamp);
+                messageResponse.setCode(`auth/login-success`);
+                messageResponse.setContent("Login success.");
                 return res.send({
                     customer: customer,
                     token: token,
@@ -518,18 +632,27 @@ class CustomerService {
                     timestamp
                 });
             } else {
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode(`auth/wrong-otp`);
+                messageResponse.setContent("otp wrong.");
                 return res.send({
-                    message: "otp wrong",
+                    message: messageResponse.toJSON(),
                     statusCode: 200,
                     code: `auth/wrong-otp`,
                     timestamp
                 });
             }
         } catch (e) {
-            console.log(e.message);
+            console.log("===========verifyLogin===========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode(`auth/${e.code.toString()}`);
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(), statusCode: 400,
-                code: `auth/${e.code}`,
+                message: messageResponse.toJSON(),
+                statusCode: 400,
+                code: `auth/${e.code.toString()}`,
                 timestamp
             });
         }
@@ -541,18 +664,32 @@ class CustomerService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "Missing customerID", statusCode: 400, code: "auth/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "auth/missing-customerid", timestamp });
         }
         if (fcm === undefined || fcm.toString().trim().length == 0) {
-            return res.send({ message: "Missing fcm", statusCode: 400, code: "auth/missing-fcm", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/missing-fcm");
+            messageResponse.setContent("Missing fcm");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "auth/missing-fcm", timestamp });
         }
 
         try {
             let cus = await CustomerModel.customerModel.findById(customerID);
             if (!cus) {
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode(`auth/customer-notfound`);
+                messageResponse.setContent("Customer not found.");
                 return res.send({
-                    message: "Customer not found",
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: `auth/customer-notfound`,
                     timestamp
@@ -560,12 +697,10 @@ class CustomerService {
             }
             cus.fcm = fcm;
             await cus.save();
-            let messageResponse = new MessageResponses();
-            const id = uuidv4();
-            messageResponse.setId(id);
+
             messageResponse.setStatusCode(200);
-            messageResponse.setContent("add fcm success");
-            messageResponse.setCreatedAt(timestamp);
+            messageResponse.setCode(`auth/add-fcm-success`);
+            messageResponse.setContent("Add fcm success.");
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 200,
@@ -573,14 +708,21 @@ class CustomerService {
                 timestamp
             });
         } catch (e) {
-            console.log(`error add fcm: ${e.message}`);
+            console.log("==========addFCM==========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode(`auth/${e.code.toString()}`);
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(), statusCode: 400,
-                code: `auth/${e.code}`,
+                message: messageResponse.toJSON(),
+                statusCode: 400,
+                code: `auth/${e.code.toString()}`,
                 timestamp
             })
         }
     }
+
     logout = async (req, res) => {
         const customerID = req.body.customerID;
         const token = req.header('Authorization');
@@ -588,11 +730,22 @@ class CustomerService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "Missing customerID", statusCode: 400, code: "auth/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "auth/missing-customerid", timestamp });
         }
         if (token === undefined || token.toString().trim().length == 0) {
-            return res.send({ message: "Missing token", statusCode: 400, code: "auth/missing-token", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/missing-token");
+            messageResponse.setContent("Missing token");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "auth/missing-token", timestamp });
         }
 
         try {
@@ -603,26 +756,37 @@ class CustomerService {
 
             let authToken = await AuthTokenModel.authTokenModel.findOneAndDelete(filter).lean();
             if (!authToken) {
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("auth/delete-failed");
+                messageResponse.setContent(`error delete token with customerID: ${customerID}`);
                 return res.send({
-                    message: `error delete token with customerID: ${customerID}`,
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "auth/delete-failed",
                     timestamp
                 });
             }
             // console.log(authToken);
+            messageResponse.setStatusCode(200);
+            messageResponse.setCode("auth/delete-success");
+            messageResponse.setContent(`logout success at: ${timestamp}`);
             return res.send({
-                message: `logout success at: ${timestamp}`,
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 code: "auth/delete-success",
                 timestamp
             });
         } catch (e) {
-            console.log(`auth.token service: delete: ${e.message}`);
+            console.log("==========logout==========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode(`auth/${e.code.toString()}`);
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
-                code: "auth/create-failed",
+                code: `auth/${e.code.toString()}`,
                 timestamp
             });
         }

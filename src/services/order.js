@@ -16,23 +16,33 @@ const { STATUS_PRODUCT } = require('../utils/product');
 const { checkPaymentMethod, PAYMENT_METHOD } = require('../utils/payment');
 const { admin } = require('../configs/firebase/index');
 const { sortObject } = require('../utils/order');
+const { title } = require('process');
 
 
 
 let mCustomerID;
 
-const getProductCart = async (customerID) => {
+const getProductCart = async (customerID, messageResponseID, timestamp) => {
     let carts = await CartModel.cartModel.find({ customer_id: customerID, status: 1 }).lean();
     let dataProduct = [];
+
+    let messageResponse = new MessageResponses();
+    messageResponse.setId(messageResponseID);
+    messageResponse.setCreatedAt(timestamp);
+
     await Promise.all(
         carts.map(async (cart) => {
             try {
                 let prodductInfo = await ProductModel.productModel.findById(cart.product_id).lean();
                 dataProduct.push(prodductInfo);
             } catch (e) {
-                console.log(e.message);
+                console.log("=======getProductCart=========");
+                console.log(e.message.toString());
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("order/getproductinfo-failed");
+                messageResponse.setContent(e.message.toString());
                 return res.send({
-                    message: e.message.toString(),
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "order/getproductinfo-failed",
                     timestamp
@@ -72,16 +82,30 @@ class OrderService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "missing customerID", statusCode: 400, code: "checkout/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-customerid", timestamp });
         }
         if (type === undefined) {
-            return res.send({ message: "missing type", statusCode: 400, code: "cart/missing-type", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/missing-type");
+            messageResponse.setContent("Missing type");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-type", timestamp });
         }
         let isNumberType = isNumber(type);
         if (!isNumberType) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/type-nan");
+            messageResponse.setContent("type not a number.");
             return res.send({
-                message: "type not a number",
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 productCarts: [],
                 code: "order/type-nan",
@@ -92,8 +116,11 @@ class OrderService {
         let typeValue = parseInt(type)
         let isValidType = checkPaymentMethod(typeValue);
         if (!isValidType) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/payment-method-invalid-value");
+            messageResponse.setContent("payment method invalid value.");
             return res.send({
-                message: "payment method invalid value",
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "order/payment-method-invalid-value",
                 timestamp
@@ -101,10 +128,13 @@ class OrderService {
         }
 
         try {
-            let productOrders = await getProductCart(customerID);
+            let productOrders = await getProductCart(customerID, id, timestamp);
             if (productOrders.length == 0) {
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("order/no product order");
+                messageResponse.setContent("No product order.");
                 return res.send({
-                    message: "no product order",
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "order/no product order",
                     timestamp
@@ -118,14 +148,11 @@ class OrderService {
                 })
             );
 
-            let messageResponse = new MessageResponses();
-            const id = uuidv4();
-            messageResponse.setId(id);
-            messageResponse.setStatusCode(200);
-            messageResponse.setContent("create order success");
-            messageResponse.setCreatedAt(timestamp);
-            // console.log(JSON.stringify(messageResponse.toJSON()));
 
+            messageResponse.setStatusCode(200);
+            messageResponse.setCode("order/get-amount-zalopay-success");
+            messageResponse.setContent("Create order success.");
+            // console.log(JSON.stringify(messageResponse.toJSON()));
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 200,
@@ -134,9 +161,14 @@ class OrderService {
                 timestamp
             });
         } catch (e) {
-            console.log(e.message);
+            console.log("=======getAmountZaloPay=======");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/get-amount-zalopay-failed");
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "order/get-amount-zalopay-failed",
                 timestamp
@@ -151,19 +183,36 @@ class OrderService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "missing customerID", statusCode: 400, code: "checkout/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-customerid", timestamp });
         }
         if (productCarts === undefined || productCarts.length == 0) {
-            return res.send({ message: "missing productCarts", statusCode: 400, code: "checkout/missing-productcarts", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/missing-productcarts");
+            messageResponse.setContent("Missing productCarts");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-productcarts", timestamp });
         }
         if (type === undefined) {
-            return res.send({ message: "missing type", statusCode: 400, code: "cart/missing-type", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/missing-type");
+            messageResponse.setContent("Missing type");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-type", timestamp });
         }
         let isNumberType = isNumber(type);
         if (!isNumberType) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/type-nan");
+            messageResponse.setContent("type not a number.");
             return res.send({
-                message: "type not a number",
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 productCarts: [],
                 code: "order/type-nan",
@@ -174,8 +223,11 @@ class OrderService {
         let typeValue = parseInt(type)
         let isValidType = checkPaymentMethod(typeValue);
         if (!isValidType) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/payment-method-invalid-value");
+            messageResponse.setContent("Payment method invalid value.");
             return res.send({
-                message: "payment method invalid value",
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "order/payment-method-invalid-value",
                 timestamp
@@ -190,16 +242,25 @@ class OrderService {
                     sum += priceOne * parseInt(productCart.quantity_cart);
                 })
             );
+            messageResponse.setStatusCode(200);
+            messageResponse.setCode("order/get-amount-zalopay-success");
+            messageResponse.setContent("Create order success.");
             return res.send({
-                message: "create order success",
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 amount: sum,
                 code: "order/get-amount-zalopay-success",
                 timestamp
             });
         } catch (e) {
+            console.log("=========getAmountZaloPayNow===========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/get-amount-zalopay-now-failed");
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "order/get-amount-zalopay-now-failed",
                 timestamp
@@ -213,13 +274,21 @@ class OrderService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "missing customerID", statusCode: 400, code: "checkout/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-customerid", timestamp });
         }
 
         try {
             let totalAmount = 0;
-            let productOrders = await getProductCart(customerID);
+            let productOrders = await getProductCart(customerID, id, timestamp);
             let productLimit = [];
             await Promise.all(
                 productOrders.map(async (productOrder) => {
@@ -230,8 +299,11 @@ class OrderService {
             );
 
             if (productLimit.length > 0) {
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("order/product-quantity-exceeds-the-limit");
+                messageResponse.setContent("Product quantity exceeds the limit.");
                 return res.send({
-                    message: "product quantity exceeds the limit",
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "order/product-quantity-exceeds-the-limit",
                     timestamp
@@ -263,6 +335,7 @@ class OrderService {
                 await detailOrder.save();
                 await CartModel.cartModel.findByIdAndUpdate(productOrder._id, { status: STATUS_CART.BOUGHT.value });
             }));
+            // TODO fix save not enough order
             order.amount = totalAmount;
             await order.save();
 
@@ -278,14 +351,11 @@ class OrderService {
             //     image: imageProduct,
             //     created_at: timestamp
             // });
-            let messageResponse = new MessageResponses();
-            const id = uuidv4();
-            messageResponse.setId(id);
             messageResponse.setStatusCode(200);
+            messageResponse.setCode("order/create-order-zalopay-success");
             messageResponse.setTitle(title);
             messageResponse.setContent(message);
             messageResponse.setImage(imageProduct);
-            messageResponse.setCreatedAt(timestamp);
             // console.log(JSON.stringify(messageResponse.toJSON()));
             return res.send({
                 message: messageResponse.toJSON(),
@@ -294,7 +364,12 @@ class OrderService {
                 timestamp
             });
         } catch (e) {
-            console.log(e.message);
+            console.log("=========createOrderZaloPay===========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/create-order-zalopay-failed");
+            messageResponse.setContent(e.message.toString());
             return res.send({
                 message: e.message.toString(),
                 statusCode: 400,
@@ -311,11 +386,22 @@ class OrderService {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "missing customerID", statusCode: 400, code: "checkout/missing-customerid", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-customerid", timestamp });
         }
         if (productOrders === undefined || productOrders.length == 0) {
-            return res.send({ message: "missing productOrders", statusCode: 400, code: "checkout/missing-productorders", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/missing-productorders");
+            messageResponse.setContent("Missing productOrders");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-productorders", timestamp });
         }
 
         try {
@@ -330,8 +416,11 @@ class OrderService {
             );
 
             if (productLimit.length > 0) {
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("order/product-quantity-exceeds-the-limit");
+                messageResponse.setContent("Product quantity exceeds the limit.");
                 return res.send({
-                    message: "product quantity exceeds the limit",
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "order/product-quantity-exceeds-the-limit",
                     timestamp
@@ -343,13 +432,14 @@ class OrderService {
                 payment_methods: PAYMENT_METHOD.ZALO_PAY.value,
                 created_at: timestamp,
             });
+            let product;
             await Promise.all(productOrders.map(async productOrder => {
                 let detailOrder = new OrderDetailModel.orderDetailModel({
                     order_id: order._id,
                     product_id: productOrder.product_id,
                     quantity: productOrder.quantity_cart,
                 });
-                let product = await ProductModel.productModel.findById(productOrder.product_id);
+                product = await ProductModel.productModel.findById(productOrder.product_id);
                 let newQuantityProduct = parseInt(product.quantity) - parseInt(productOrder.quantity_cart);
                 product.quantity = newQuantityProduct;
                 if (newQuantityProduct === 0) {
@@ -365,19 +455,28 @@ class OrderService {
             await order.save();
 
             let customer = await CustomerModel.customerModel.findById(customerID);
-            await NotificationService.createNotification("Đặt đơn hàng",
-                `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ${PAYMENT_METHOD.ZALO_PAY.value} 
-                    với mã đơn hàng ${order._id}`, "product.image", customer.fcm);
+            let title = "Đặt đơn hàng";
+            let content = `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ${PAYMENT_METHOD.ZALO_PAY.value} với mã đơn hàng ${order._id}`;
+            let imageProduct = product.img_cover;
+            await NotificationService.createNotification(title, content, imageProduct, customer.fcm);
+            messageResponse.setStatusCode(200);
+            messageResponse.setCode("order/create-order-zalopay-success");
+            messageResponse.setContent("Create order zalopay success.");
             return res.send({
-                message: "create order zalopay success",
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 code: "order/create-order-zalopay-success",
                 timestamp
             });
         } catch (e) {
-            console.log(e.message);
+            console.log("=========createOrderZaloPayNow============");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/create-order-zalopay-failed");
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "order/create-order-zalopay-failed",
                 timestamp
@@ -388,15 +487,23 @@ class OrderService {
     // TODO VNPay
     createPaymentURL = async (req, res) => {
         const customerID = req.body.customerID;
-        if (customerID === undefined || customerID.toString().trim().length == 0) {
-            return res.send({ message: "missing customerID", statusCode: 400, code: "checkout/missing-customerid", timestamp });
-        }
-
-        process.env.TZ = specificTimeZone;
-
         let date = new Date();
         let createDate = moment(date).format('YYYYMMDDHHmmss');
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-customerid", timestamp });
+        }
+
+        process.env.TZ = specificTimeZone;
 
         let ipAddr = req.headers['x-forwarded-for'] ||
             req.connection.remoteAddress ||
@@ -411,10 +518,13 @@ class OrderService {
         // TODO body
         try {
             let totalAmount = 0;
-            let productOrders = await getProductCart(customerID);
+            let productOrders = await getProductCart(customerID, id, timestamp);
             if (productOrders.length == 0) {
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("order/no product order");
+                messageResponse.setContent("No product order.");
                 return res.send({
-                    message: "no product order",
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "order/no product order",
                     timestamp
@@ -430,8 +540,11 @@ class OrderService {
             );
 
             if (productLimit.length > 0) {
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("order/product-quantity-exceeds-the-limit");
+                messageResponse.setContent("Product quantity exceeds the limit.");
                 return res.send({
-                    message: "product quantity exceeds the limit",
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "order/product-quantity-exceeds-the-limit",
                     timestamp
@@ -477,17 +590,25 @@ class OrderService {
             vnpUrl += '?' + querystring.stringify(vnp_Params, { encode: false });
 
             mCustomerID = customerID;
+            messageResponse.setStatusCode(200);
+            messageResponse.setCode("order/get-payment-url-success");
+            messageResponse.setContent("Get paymetn url success.");
             return res.send({
-                message: "get url success",
+                message: messageResponse.toJSON(),
                 statusCode: 200,
                 code: "order/get-payment-URL-success",
                 paymentURL: vnpUrl,
                 timestamp: timestamp
             });
         } catch (e) {
-            console.log(e.message);
+            console.log("======createPaymentURL=========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/get-payment-url-failed");
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: e.message.toString(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "order/get-payment-URL-failed",
                 timestamp
@@ -524,7 +645,7 @@ class OrderService {
                 // TODO update product, cart,...
                 try {
                     let totalAmount = 0;
-                    let productOrders = await getProductCart(mCustomerID);
+                    let productOrders = await getProductCart(mCustomerID, id, timestamp);
                     let productLimit = [];
                     await Promise.all(
                         productOrders.map(async (productOrder) => {
@@ -548,14 +669,14 @@ class OrderService {
                         payment_methods: PAYMENT_METHOD.E_BANKING.value,
                         created_at: timestamp,
                     });
-
+                    let product;
                     await Promise.all(productOrders.map(async productOrder => {
                         let detailOrder = new OrderDetailModel.orderDetailModel({
                             order_id: order._id,
                             product_id: productOrder.product_id,
                             quantity: productOrder.quantity_cart,
                         });
-                        let product = await ProductModel.productModel.findById(productOrder.product_id);
+                        product = await ProductModel.productModel.findById(productOrder.product_id);
                         let newQuantityProduct = parseInt(product.quantity) - parseInt(productOrder.quantity_cart);
                         product.quantity = newQuantityProduct;
                         if (newQuantityProduct === 0) {
@@ -571,19 +692,24 @@ class OrderService {
                     await order.save();
 
                     let customer = await CustomerModel.customerModel.findById(mCustomerID);
-                    await NotificationService.createNotification("Đặt đơn hàng",
-                        `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ${PAYMENT_METHOD.E_BANKING.value} 
-                            với mã đơn hàng ${order._id}`, "product.image", customer.fcm);
+                    let title = "Đặt đơn hàng";
+                    let content = `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ${PAYMENT_METHOD.E_BANKING.value} với mã đơn hàng ${order._id}`;
+                    let imageProduct = product.img_cover;
+                    await NotificationService.createNotification(title, content, imageProduct, customer.fcm);
                     return res.redirect(`${ipAddress}/v1/api/order/paySuccess`);
                 } catch (e) {
-                    console.log(e.message);
+                    console.log("===========vnpayReturn==========");
+                    console.log(e.message.toString());
+                    console.log(e.code.toString());
                     return res.redirect(`${ipAddress}/v1/api/order/payFail`);
                 }
             } else {
-                console.log(e.message);
+                console.log("===========vnpayReturn1==========");
+                console.log(e.message.toString());
                 return res.redirect(`${ipAddress}/v1/api/order/payFail`);
             }
         } else {
+            console.log("===========vnpayReturn2==========");
             return res.redirect(`${ipAddress}/v1/api/order/payFail`);
         }
     }
