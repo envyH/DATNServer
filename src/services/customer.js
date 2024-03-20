@@ -700,7 +700,7 @@ class CustomerService {
 
             messageResponse.setStatusCode(200);
             messageResponse.setCode(`auth/add-fcm-success`);
-            messageResponse.setContent("Add fcm success.");
+            messageResponse.setContent("Đăng nhập thành công");
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 200,

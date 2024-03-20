@@ -13,7 +13,11 @@ const { STATUS_CART, checkStatusInCart } = require('../utils/cart');
 const { isNumber } = require('../utils/index');
 
 const getProductCart = async (customerID, messageResponseID, timestamp) => {
-    let carts = await CartModel.cartModel.find({ customer_id: customerID }).lean();
+    const filterCart = {
+        customer_id: customerID,
+        status: { $in: [STATUS_CART.DEFAULT.value, STATUS_CART.SELECTED.value] }
+    }
+    let carts = await CartModel.cartModel.find(filterCart).lean();
     let dataProduct = [];
 
     let messageResponse = new MessageResponses();
@@ -79,7 +83,6 @@ const getProductCart = async (customerID, messageResponseID, timestamp) => {
         }
     }
     return mData;
-
 }
 
 class CartService {

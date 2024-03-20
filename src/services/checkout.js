@@ -14,7 +14,11 @@ const { PAYMENT_METHOD } = require('../utils/payment');
 
 
 const getProductCart = async (customerID, messageResponseID, timestamp) => {
-    let carts = await CartModel.cartModel.find({ customer_id: customerID }).lean();
+    const filterCart = {
+        customer_id: customerID,
+        status: STATUS_CART.SELECTED.value
+    }
+    let carts = await CartModel.cartModel.find(filterCart).lean();
     let dataProduct = [];
 
     let messageResponse = new MessageResponses();
