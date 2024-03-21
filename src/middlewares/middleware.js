@@ -37,7 +37,8 @@ exports.checkPermission = (req, res, next) => {
             next();
         }
     } catch (e) {
-        messageResponse.setContent(e.expiredAt.toString());
+        // messageResponse.setContent(e.expiredAt.toString());
+        messageResponse.setContent("Phiên đăng nhập hết hạn \nVui lòng đăng nhập lại!");
         messageResponse.setCode(e.message.toString());
         console.log("middleware2", messageResponse.toJSON());
         return res.send({

@@ -114,10 +114,10 @@ class NotificationService {
             })
             .catch((error) => {
                 console.log("==========createNotification2=========");
-                console.log(error);
+                console.log(error.message.toString());
                 messageResponse.setStatusCode(400);
-                messageResponse.setCode("notification/send-failed");
-                messageResponse.setContent(`Error sending message: ${error}`);
+                messageResponse.setCode(error.code.toString());
+                messageResponse.setContent(`Sending message: ${error}`);
                 return res.send({
                     message: messageResponse.toJSON(),
                     statusCode: 400,
