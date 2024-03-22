@@ -164,6 +164,62 @@ class ProductService {
         }
     }
 
+    searchByKeyword = async (req, res) => {
+        const customerID = req.body.customerID;
+        const keyword = req.body.keyword;
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("product/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "product/missing-customerid", timestamp });
+        }
+        if (keyword === undefined || keyword.toString().trim().length == 0) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("product/missing-keyword");
+            messageResponse.setContent("Missing keyword");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "product/missing-keyword", timestamp });
+        }
+
+        try {
+            let regex = new RegExp(keyword);
+            const filter = {
+                name: { $regex: regex, $options: 'i' }
+            };
+            let product = await ProductModel.productModel.find(filter).lean();
+            messageResponse.setStatusCode(200);
+            messageResponse.setCode("product/search-success");
+            messageResponse.setContent("Get product search success.");
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 200,
+                code: "product/search-success",
+                products: product,
+                timestamp
+            });
+        } catch (e) {
+            console.log("========searchByKeyword==========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("product/search-failed");
+            messageResponse.setContent(e.message.toString());
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 400,
+                code: "product/search-failed",
+                timestamp
+            });
+        }
+    }
+
 
 }
 

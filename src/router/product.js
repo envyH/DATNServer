@@ -10,6 +10,7 @@ const ProductService = require('../services/product');
 router.post("/get", checkPermission, ProductService.getList);
 router.post("/detail", checkPermission, ProductService.getDetail);
 router.post("/get/category", checkPermission, ProductService.getListByCateID);
+router.post("/search", checkPermission, ProductService.searchByKeyword);
 
 
 module.exports = router
