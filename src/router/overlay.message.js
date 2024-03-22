@@ -9,6 +9,7 @@ const OverlayMessagesService = require('../services/overlay.message');
 
 
 router.post("/get", checkPermission, OverlayMessagesService.getList);
+router.post("/update", checkPermission, OverlayMessagesService.updateStatus);
 
 
 module.exports = router

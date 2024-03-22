@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 
 const overlayMessageSchema = mongoose.Schema(
     {
+        customer_id: { type: mongoose.Schema.Types.ObjectId, ref: "customers", required: true, },
+        status: { type: Number, required: true },
         notification: { type: String, required: true },
         image: { type: String, required: true },
         title_image: { type: String, required: true },
