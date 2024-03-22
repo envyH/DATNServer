@@ -641,6 +641,9 @@ class OrderService {
         let hmac = crypto.createHmac("sha512", secretKey);
         let signed = hmac.update(new Buffer(signData, 'utf-8')).digest("hex");
         const ipAddress = process.env.URL;
+        // const portLocal = process.env.POST;
+        // const ipLocal = process.env.IP_LOCAL;
+        // const ipAddress = `http://${ipLocal}:${portLocal}`;
         if (secureHash === signed) {
             //Kiem tra xem du lieu trong db co hop le hay khong va thong bao ket qua
             // TODO https://sandbox.vnpayment.vn/apis/docs/truy-van-hoan-tien/querydr&refund.html
@@ -709,7 +712,6 @@ class OrderService {
                 }
             } else {
                 console.log("===========vnpayReturn1==========");
-                console.log(e.message.toString());
                 return res.redirect(`${ipAddress}/v1/api/order/payFail`);
             }
         } else {
