@@ -625,6 +625,11 @@ class OrderService {
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
         let vnp_Params = req.query;
 
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
         let secureHash = vnp_Params['vnp_SecureHash'];
 
         delete vnp_Params['vnp_SecureHash'];
@@ -663,8 +668,11 @@ class OrderService {
                     );
 
                     if (productLimit.length > 0) {
+                        messageResponse.setStatusCode(400);
+                        messageResponse.setCode("order/product-quantity-exceeds-the-limit");
+                        messageResponse.setContent("Product quantity exceeds the limit.");
                         return res.send({
-                            message: "product quantity exceeds the limit",
+                            message: messageResponse.toJSON(),
                             statusCode: 400,
                             code: "order/product-quantity-exceeds-the-limit",
                             timestamp
@@ -707,7 +715,7 @@ class OrderService {
                 } catch (e) {
                     console.log("===========vnpayReturn==========");
                     console.log(e.message.toString());
-                    console.log(e.code.toString());
+                    console.log(e.toString());
                     return res.redirect(`${ipAddress}/v1/api/order/payFail`);
                 }
             } else {
