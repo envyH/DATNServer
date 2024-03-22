@@ -1,3 +1,4 @@
+const MAX_CART = 20;
 const STATUS_CART = {
     DELETED: { value: -1 },
     DEFAULT: { value: 0 },
@@ -26,6 +27,7 @@ const checkStatusInCart = (value) => {
 }
 
 module.exports = {
+    MAX_CART,
     STATUS_CART,
     checkStatusInCart
 }

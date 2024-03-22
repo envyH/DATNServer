@@ -9,7 +9,7 @@ const FirebaseService = require('../services/firebase');
 const { CartModel, ProductModel } = require('../models');
 const MessageResponses = require('../models/model.message.response');
 
-const { STATUS_CART, checkStatusInCart } = require('../utils/cart');
+const { MAX_CART, STATUS_CART, checkStatusInCart } = require('../utils/cart');
 const { isNumber } = require('../utils/index');
 
 const getProductCart = async (customerID, messageResponseID, timestamp) => {
@@ -142,7 +142,7 @@ class CartService {
             let newQuantity = 1;
             if (cart) {
                 newQuantity = parseInt(cart.quantity) + parseInt(mQuantity);
-                if (newQuantity > parseInt(product.quantity)) {
+                if (newQuantity > parseInt(product.quantity) || newQuantity > MAX_CART) {
                     messageResponse.setStatusCode(400);
                     messageResponse.setCode("cart/update-quantity-failed");
                     messageResponse.setContent("Product quantity exceeds the limit.");
@@ -307,12 +307,12 @@ class CartService {
             if (cartSelected) {
                 let newQuantity = parseInt(cartSelected.quantity);
                 if (type === "plus") {
-                    if (newQuantity + quantityValue <= parseInt(dataProduct.quantity)) {
+                    if (newQuantity + quantityValue <= MAX_CART && newQuantity + quantityValue <= parseInt(dataProduct.quantity)) {
                         newQuantity += quantityValue;
                     } else {
                         messageResponse.setStatusCode(400);
                         messageResponse.setCode("cart/plus-not-change");
-                        messageResponse.setContent("Plus not change.");
+                        messageResponse.setContent("Số lượng không thay đổi.");
                         return res.send({
                             message: messageResponse.toJSON(),
                             statusCode: 400,
@@ -326,7 +326,7 @@ class CartService {
                     } else {
                         messageResponse.setStatusCode(400);
                         messageResponse.setCode("cart/minus-not-change");
-                        messageResponse.setContent("Minus not change.");
+                        messageResponse.setContent("Số lượng không thay đổi.");
                         return res.send({
                             message: messageResponse.toJSON(),
                             statusCode: 400,
