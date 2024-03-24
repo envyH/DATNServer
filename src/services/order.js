@@ -871,6 +871,8 @@ class OrderService {
     }
 
     vnpayReturn = async (req, res) => {
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
         const ipAddress = process.env.URL;
         let messageResponse = new MessageResponses();
         const id = uuidv4();
@@ -899,6 +901,8 @@ class OrderService {
     }
 
     vnpayReturnNow = async (req, res) => {
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
         const ipAddress = process.env.URL;
         let messageResponse = new MessageResponses();
         const id = uuidv4();
