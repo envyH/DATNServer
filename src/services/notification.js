@@ -35,7 +35,7 @@ class NotificationService {
             data: {
                 title: title,
                 body: content,
-                type: type,
+                type: type + "",
                 imageURL: img !== undefined ? img.toString().trim().length > 0 ? img : "" : "",
             },
             token: fcm,

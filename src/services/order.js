@@ -726,12 +726,12 @@ class OrderService {
             console.log(e.message.toString());
             console.log(e.code.toString());
             messageResponse.setStatusCode(400);
-            messageResponse.setCode("order/create-order-zalopay-failed");
+            messageResponse.setCode("order/create-order-zalopay-now-failed");
             messageResponse.setContent(e.message.toString());
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 400,
-                code: "order/create-order-zalopay-failed",
+                code: "order/create-order-zalopay-now-failed",
                 timestamp
             });
         }
