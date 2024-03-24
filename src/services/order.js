@@ -850,7 +850,7 @@ class OrderService {
                     name: dataProduct.name,
                     image: dataProduct.img_cover,
                     quantity_product: dataProduct.quantity,
-                    quantity_cart: quantityCart,
+                    quantity_cart: quantityValue,
                     price: dataProduct.price,
                     note: "",
                     status_product: dataProduct.status,
