@@ -306,9 +306,9 @@ const mVnpReturn = async (req, res, productOrders) => {
 
                 let customer = await CustomerModel.customerModel.findById(mCustomerID);
                 let title = "Đặt đơn hàng";
-                let content = `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ${PAYMENT_METHOD.E_BANKING.value} với mã đơn hàng ${order._id}`;
+                let content = `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán E-Banking với mã đơn hàng ${order._id}`;
                 let imageProduct = product.img_cover;
-                await NotificationService.createNotification(title, content, imageProduct, customer.fcm);
+                await NotificationService.createNotification(title, content, imageProduct, customer.fcm, PAYMENT_METHOD.E_BANKING.value);
                 return res.redirect(`${ipAddress}/v1/api/order/paySuccess`);
             } catch (e) {
                 console.log("===========vnpayReturn==========");
@@ -595,7 +595,7 @@ class OrderService {
             let imageProduct = product.img_cover;
             let title = "Đặt đơn hàng";
             let message = `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ZALOPAY với mã đơn hàng ${order._id}`;
-            await NotificationService.createNotification(title, message, imageProduct, customer.fcm);
+            await NotificationService.createNotification(title, message, imageProduct, customer.fcm, PAYMENT_METHOD.ZALO_PAY.value);
             // let messageResponse = MessageResponseModel.messageResponsesModel({
             //     code: 200,
             //     title: title,
@@ -708,12 +708,13 @@ class OrderService {
 
             let customer = await CustomerModel.customerModel.findById(customerID);
             let title = "Đặt đơn hàng";
-            let content = `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ${PAYMENT_METHOD.ZALO_PAY.value} với mã đơn hàng ${order._id}`;
+            let content = `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ZALOPAY với mã đơn hàng ${order._id}`;
             let imageProduct = product.img_cover;
-            await NotificationService.createNotification(title, content, imageProduct, customer.fcm);
+            await NotificationService.createNotification(title, content, imageProduct, customer.fcm, PAYMENT_METHOD.ZALO_PAY.value);
             messageResponse.setStatusCode(200);
             messageResponse.setCode("order/create-order-zalopay-success");
-            messageResponse.setContent("Create order zalopay success.");
+            messageResponse.setTitle(title);
+            messageResponse.setContent(content);
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 200,
@@ -759,7 +760,7 @@ class OrderService {
             await mCreatePaymentURL(req, res, customerID, productOrders, timestamp);
         } catch (e) {
             console.log("======createPaymentURL=========");
-            console.log(e.message.toString());
+            console.log(e);
             messageResponse.setStatusCode(400);
             messageResponse.setCode("order/get-payment-url-failed");
             messageResponse.setContent(e.message.toString());
@@ -843,7 +844,19 @@ class OrderService {
                         timestamp
                     });
                 }
-                productOrders.push(dataProduct);
+                let dataResponse = {
+                    _id: id,
+                    product_id: dataProduct._id,
+                    name: dataProduct.name,
+                    image: dataProduct.img_cover,
+                    quantity_product: dataProduct.quantity,
+                    quantity_cart: quantityCart,
+                    price: dataProduct.price,
+                    note: "",
+                    status_product: dataProduct.status,
+                    created_at: timestamp,
+                }
+                productOrders.push(dataResponse);
                 await mCreatePaymentURL(req, res, customerID, productOrders, timestamp);
             }
             messageResponse.setStatusCode(400);
@@ -857,7 +870,7 @@ class OrderService {
             });
         } catch (e) {
             console.log("======createPaymentURLNow=========");
-            console.log(e.message.toString());
+            console.log(e);
             messageResponse.setStatusCode(400);
             messageResponse.setCode("order/get-payment-url-now-failed");
             messageResponse.setContent(e.message.toString());

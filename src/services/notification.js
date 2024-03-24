@@ -17,7 +17,7 @@ const MessageResponses = require('../models/model.message.response');
 
 
 class NotificationService {
-    createNotification = async (title, content, img, fcm) => {
+    createNotification = async (title, content, img, fcm, type) => {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
@@ -35,6 +35,7 @@ class NotificationService {
             data: {
                 title: title,
                 body: content,
+                type: type,
                 imageURL: img !== undefined ? img.toString().trim().length > 0 ? img : "" : "",
             },
             token: fcm,
@@ -53,6 +54,7 @@ class NotificationService {
         const content = req.body.content;
         const img = req.body.img;
         const fcm = req.body.fcm;
+        const type = req.body.type;
 
 
         let date = new Date();
@@ -81,6 +83,12 @@ class NotificationService {
             messageResponse.setContent("missing fcm");
             return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "notification/missing-fcm", timestamp });
         }
+        if (type === undefined || type.toString().trim().length == 0) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("notification/missing-type");
+            messageResponse.setContent("missing type");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "notification/missing-type", timestamp });
+        }
 
         // create notification
         let notification = new NotificationModel.notificationModel({
@@ -96,6 +104,7 @@ class NotificationService {
             data: {
                 title: title,
                 body: content,
+                type: type,
                 imageURL: img !== undefined ? img.toString().trim().length > 0 ? img : "" : "",
             },
             token: fcm,
