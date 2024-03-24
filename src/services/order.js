@@ -21,6 +21,7 @@ const { title } = require('process');
 
 
 let mCustomerID;
+let mProductOrders;
 
 const getProductCart = async (customerID, messageResponseID, timestamp) => {
     const filterCart = {
@@ -120,6 +121,7 @@ const mCreatePaymentURL = async (req, res, customerID, productOrders, timestamp)
                 timestamp
             });
         }
+        mProductOrders = productOrders;
         let productLimit = [];
         await Promise.all(
             productOrders.map(async (productOrder) => {
@@ -206,7 +208,7 @@ const mCreatePaymentURL = async (req, res, customerID, productOrders, timestamp)
     }
 }
 
-const demo = async (req, res, productOrders) => {
+const mVnpReturn = async (req, res, productOrders) => {
     let date = new Date();
     let timestamp = moment(date).tz(specificTimeZone).format(formatType);
     let vnp_Params = req.query;
@@ -887,7 +889,23 @@ class OrderService {
                     timestamp
                 });
             }
-            await demo(req, res, productOrders);
+            await mVnpReturn(req, res, productOrders);
+        } catch (e) {
+            console.log("===========vnpayReturn==========");
+            console.log(e.message.toString());
+            console.log(e.toString());
+            return res.redirect(`${ipAddress}/v1/api/order/payFail`);
+        }
+    }
+
+    vnpayReturnNow = async (req, res) => {
+        const ipAddress = process.env.URL;
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+        try { 
+            await mVnpReturn(req, res, mProductOrders);
         } catch (e) {
             console.log("===========vnpayReturn==========");
             console.log(e.message.toString());
