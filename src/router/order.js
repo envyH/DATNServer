@@ -14,7 +14,9 @@ router.post("/create/zalopay-now", checkPermission, OrderService.createOrderZalo
 
 // TODO VNPay
 router.post("/create_payment_url", checkPermission, OrderService.createPaymentURL);
+router.post("/create_payment_url_now", checkPermission, OrderService.createPaymentURLNow);
 router.get("/vnpay_return", OrderService.vnpayReturn);
+router.get("/vnpay_return_now", OrderService.vnpayReturnNow);
 router.get("/vnpay_ipn", OrderService.vnpayIPN);
 router.post("/querydr", checkPermission, OrderService.queryDR);
 router.post("/refund", checkPermission, OrderService.refund);

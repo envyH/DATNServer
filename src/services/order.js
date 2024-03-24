@@ -78,6 +78,252 @@ const getProductCart = async (customerID, messageResponseID, timestamp) => {
     return mData;
 }
 
+const mCreatePaymentURL = async (req, res, customerID, productOrders, timestamp) => {
+    let date = new Date();
+    let createDate = moment(date).format('YYYYMMDDHHmmss');
+
+    let messageResponse = new MessageResponses();
+    const id = uuidv4();
+    messageResponse.setId(id);
+    messageResponse.setCreatedAt(timestamp);
+
+    if (customerID === undefined || customerID.toString().trim().length == 0) {
+        messageResponse.setStatusCode(400);
+        messageResponse.setCode("order/missing-customerid");
+        messageResponse.setContent("Missing customerID");
+        return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-customerid", timestamp });
+    }
+
+    process.env.TZ = specificTimeZone;
+
+    let ipAddr = req.headers['x-forwarded-for'] ||
+        req.connection.remoteAddress ||
+        req.socket.remoteAddress ||
+        req.connection.socket.remoteAddress;
+
+    let tmnCode = process.env.vnp_TmnCode;
+    let secretKey = process.env.vnp_HashSecret;
+    let vnpUrl = process.env.VNP_URL;
+    let returnUrl = process.env.VNP_ReturnUrl;
+    let orderId = moment(date).format('DDHHmmss');
+    // TODO body
+    try {
+        let totalAmount = 0;
+        if (productOrders.length == 0) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/no product order");
+            messageResponse.setContent("No product order.");
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 400,
+                code: "order/no product order",
+                timestamp
+            });
+        }
+        let productLimit = [];
+        await Promise.all(
+            productOrders.map(async (productOrder) => {
+                if (parseInt(productOrder.quantity_cart) > parseInt(productOrder.quantity_product)) {
+                    productLimit.push(productOrder.product_id);
+                }
+            })
+        );
+
+        if (productLimit.length > 0) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/product-quantity-exceeds-the-limit");
+            messageResponse.setContent("Product quantity exceeds the limit.");
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 400,
+                code: "order/product-quantity-exceeds-the-limit",
+                timestamp
+            });
+        }
+
+        await Promise.all(productOrders.map(async productOrder => {
+            let product = await ProductModel.productModel.findById(productOrder.product_id);
+            totalAmount = parseInt(productOrder.quantity_cart) * parseInt(product.price);
+        }));
+        let bankCode = req.body.bankCode;
+        let locale = req.body.language;
+
+        if (locale === null || locale === '') {
+            locale = 'vn';
+        }
+        let currCode = 'VND';
+        let vnp_Params = {};
+        vnp_Params['vnp_Version'] = '2.1.0';
+        vnp_Params['vnp_Command'] = 'pay';
+        vnp_Params['vnp_TmnCode'] = tmnCode;
+        vnp_Params['vnp_Locale'] = locale;
+        vnp_Params['vnp_CurrCode'] = currCode;
+        vnp_Params['vnp_TxnRef'] = orderId;
+        vnp_Params['vnp_OrderInfo'] = 'Thanh toan cho ma GD:' + orderId;
+        vnp_Params['vnp_OrderType'] = 'other';
+        vnp_Params['vnp_Amount'] = parseInt(totalAmount) * 100;
+        vnp_Params['vnp_ReturnUrl'] = returnUrl;
+        vnp_Params['vnp_IpAddr'] = ipAddr;
+        vnp_Params['vnp_CreateDate'] = createDate;
+        if (bankCode !== null && bankCode !== '') {
+            vnp_Params['vnp_BankCode'] = bankCode;
+        }
+
+        vnp_Params = sortObject(vnp_Params);
+
+        let querystring = require('qs');
+        let signData = querystring.stringify(vnp_Params, { encode: false });
+        let crypto = require("crypto");
+        let hmac = crypto.createHmac("sha512", secretKey);
+        let signed = hmac.update(new Buffer(signData, 'utf-8')).digest("hex");
+        vnp_Params['vnp_SecureHash'] = signed;
+        vnpUrl += '?' + querystring.stringify(vnp_Params, { encode: false });
+
+        mCustomerID = customerID;
+        messageResponse.setStatusCode(200);
+        messageResponse.setCode("order/get-payment-url-success");
+        messageResponse.setContent("Get paymetn url success.");
+        return res.send({
+            message: messageResponse.toJSON(),
+            statusCode: 200,
+            code: "order/get-payment-URL-success",
+            paymentURL: vnpUrl,
+            timestamp: timestamp
+        });
+    } catch (e) {
+        console.log("======mCreatePaymentURL=========");
+        console.log(e.message.toString());
+        console.log(e.code.toString());
+        messageResponse.setStatusCode(400);
+        messageResponse.setCode("order/get-payment-url-failed");
+        messageResponse.setContent(e.message.toString());
+        return res.send({
+            message: messageResponse.toJSON(),
+            statusCode: 400,
+            code: "order/get-payment-URL-failed",
+            timestamp
+        });
+    }
+}
+
+const demo = async (req, res, productOrders) => {
+    let date = new Date();
+    let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+    let vnp_Params = req.query;
+
+    let messageResponse = new MessageResponses();
+    const id = uuidv4();
+    messageResponse.setId(id);
+    messageResponse.setCreatedAt(timestamp);
+
+    let secureHash = vnp_Params['vnp_SecureHash'];
+
+    delete vnp_Params['vnp_SecureHash'];
+    delete vnp_Params['vnp_SecureHashType'];
+
+    vnp_Params = sortObject(vnp_Params);
+
+    let tmnCode = process.env.vnp_TmnCode;
+    let secretKey = process.env.vnp_HashSecret;
+
+    let querystring = require('qs');
+    let signData = querystring.stringify(vnp_Params, { encode: false });
+    let crypto = require("crypto");
+    let hmac = crypto.createHmac("sha512", secretKey);
+    let signed = hmac.update(new Buffer(signData, 'utf-8')).digest("hex");
+    const ipAddress = process.env.URL;
+    // const portLocal = process.env.POST;
+    // const ipLocal = process.env.IP_LOCAL;
+    // const ipAddress = `http://${ipLocal}:${portLocal}`;
+    if (secureHash === signed) {
+        //Kiem tra xem du lieu trong db co hop le hay khong va thong bao ket qua
+        // TODO https://sandbox.vnpayment.vn/apis/docs/truy-van-hoan-tien/querydr&refund.html
+        let code = vnp_Params['vnp_ResponseCode'];
+        if (code == "00") {
+            // TODO update product, cart,...
+            try {
+                let totalAmount = 0;
+                if (!productOrders) {
+                    messageResponse.setStatusCode(400);
+                    messageResponse.setCode("order/cannot-load-product-cart");
+                    messageResponse.setContent("Cannot load product cart.");
+                    return res.send({
+                        message: messageResponse.toJSON(),
+                        statusCode: 400,
+                        code: "order/cannot-load-product-cart",
+                        timestamp
+                    });
+                }
+                let productLimit = [];
+                await Promise.all(
+                    productOrders.map(async (productOrder) => {
+                        if (parseInt(productOrder.quantity_cart) > parseInt(productOrder.quantity_product)) {
+                            productLimit.push(productOrder.product_id);
+                        }
+                    })
+                );
+
+                if (productLimit.length > 0) {
+                    messageResponse.setStatusCode(400);
+                    messageResponse.setCode("order/product-quantity-exceeds-the-limit");
+                    messageResponse.setContent("Product quantity exceeds the limit.");
+                    return res.send({
+                        message: messageResponse.toJSON(),
+                        statusCode: 400,
+                        code: "order/product-quantity-exceeds-the-limit",
+                        timestamp
+                    });
+                }
+
+                let order = new OrderModel.orderModel({
+                    customer_id: mCustomerID,
+                    payment_methods: PAYMENT_METHOD.E_BANKING.value,
+                    created_at: timestamp,
+                });
+                let product;
+                await Promise.all(productOrders.map(async productOrder => {
+                    let detailOrder = new OrderDetailModel.orderDetailModel({
+                        order_id: order._id,
+                        product_id: productOrder.product_id,
+                        quantity: productOrder.quantity_cart,
+                    });
+                    product = await ProductModel.productModel.findById(productOrder.product_id);
+                    let newQuantityProduct = parseInt(product.quantity) - parseInt(productOrder.quantity_cart);
+                    product.quantity = newQuantityProduct;
+                    if (newQuantityProduct === 0) {
+                        product.status = STATUS_PRODUCT.OUT_OF_STOCK.value;
+                    }
+                    product.sold = parseInt(product.sold) + parseInt(productOrder.quantity_cart);
+                    totalAmount = parseInt(productOrder.quantity_cart) * parseInt(product.price);
+                    await product.save();
+                    await detailOrder.save();
+                    await CartModel.cartModel.findByIdAndUpdate(productOrder._id, { status: STATUS_CART.BOUGHT.value });
+                }));
+                order.amount = totalAmount;
+                await order.save();
+
+                let customer = await CustomerModel.customerModel.findById(mCustomerID);
+                let title = "Đặt đơn hàng";
+                let content = `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ${PAYMENT_METHOD.E_BANKING.value} với mã đơn hàng ${order._id}`;
+                let imageProduct = product.img_cover;
+                await NotificationService.createNotification(title, content, imageProduct, customer.fcm);
+                return res.redirect(`${ipAddress}/v1/api/order/paySuccess`);
+            } catch (e) {
+                console.log("===========vnpayReturn==========");
+                console.log(e.message.toString());
+                console.log(e.toString());
+                return res.redirect(`${ipAddress}/v1/api/order/payFail`);
+            }
+        } else {
+            console.log("===========vnpayReturn1==========");
+            return res.redirect(`${ipAddress}/v1/api/order/payFail`);
+        }
+    } else {
+        console.log("===========vnpayReturn2==========");
+        return res.redirect(`${ipAddress}/v1/api/order/payFail`);
+    }
+}
+
 class OrderService {
     getAmountZaloPay = async (req, res) => {
         const customerID = req.body.customerID;
@@ -492,7 +738,6 @@ class OrderService {
     createPaymentURL = async (req, res) => {
         const customerID = req.body.customerID;
         let date = new Date();
-        let createDate = moment(date).format('YYYYMMDDHHmmss');
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
         let messageResponse = new MessageResponses();
@@ -507,103 +752,9 @@ class OrderService {
             return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-customerid", timestamp });
         }
 
-        process.env.TZ = specificTimeZone;
-
-        let ipAddr = req.headers['x-forwarded-for'] ||
-            req.connection.remoteAddress ||
-            req.socket.remoteAddress ||
-            req.connection.socket.remoteAddress;
-
-        let tmnCode = process.env.vnp_TmnCode;
-        let secretKey = process.env.vnp_HashSecret;
-        let vnpUrl = process.env.VNP_URL;
-        let returnUrl = process.env.VNP_ReturnUrl;
-        let orderId = moment(date).format('DDHHmmss');
-        // TODO body
         try {
-            let totalAmount = 0;
             let productOrders = await getProductCart(customerID, id, timestamp);
-            if (productOrders.length == 0) {
-                messageResponse.setStatusCode(400);
-                messageResponse.setCode("order/no product order");
-                messageResponse.setContent("No product order.");
-                return res.send({
-                    message: messageResponse.toJSON(),
-                    statusCode: 400,
-                    code: "order/no product order",
-                    timestamp
-                });
-            }
-            let productLimit = [];
-            await Promise.all(
-                productOrders.map(async (productOrder) => {
-                    if (parseInt(productOrder.quantity_cart) > parseInt(productOrder.quantity_product)) {
-                        productLimit.push(productOrder.product_id);
-                    }
-                })
-            );
-
-            if (productLimit.length > 0) {
-                messageResponse.setStatusCode(400);
-                messageResponse.setCode("order/product-quantity-exceeds-the-limit");
-                messageResponse.setContent("Product quantity exceeds the limit.");
-                return res.send({
-                    message: messageResponse.toJSON(),
-                    statusCode: 400,
-                    code: "order/product-quantity-exceeds-the-limit",
-                    timestamp
-                });
-            }
-
-            await Promise.all(productOrders.map(async productOrder => {
-                let product = await ProductModel.productModel.findById(productOrder.product_id);
-                totalAmount = parseInt(productOrder.quantity_cart) * parseInt(product.price);
-            }));
-            let bankCode = req.body.bankCode;
-            let locale = req.body.language;
-
-            if (locale === null || locale === '') {
-                locale = 'vn';
-            }
-            let currCode = 'VND';
-            let vnp_Params = {};
-            vnp_Params['vnp_Version'] = '2.1.0';
-            vnp_Params['vnp_Command'] = 'pay';
-            vnp_Params['vnp_TmnCode'] = tmnCode;
-            vnp_Params['vnp_Locale'] = locale;
-            vnp_Params['vnp_CurrCode'] = currCode;
-            vnp_Params['vnp_TxnRef'] = orderId;
-            vnp_Params['vnp_OrderInfo'] = 'Thanh toan cho ma GD:' + orderId;
-            vnp_Params['vnp_OrderType'] = 'other';
-            vnp_Params['vnp_Amount'] = parseInt(totalAmount) * 100;
-            vnp_Params['vnp_ReturnUrl'] = returnUrl;
-            vnp_Params['vnp_IpAddr'] = ipAddr;
-            vnp_Params['vnp_CreateDate'] = createDate;
-            if (bankCode !== null && bankCode !== '') {
-                vnp_Params['vnp_BankCode'] = bankCode;
-            }
-
-            vnp_Params = sortObject(vnp_Params);
-
-            let querystring = require('qs');
-            let signData = querystring.stringify(vnp_Params, { encode: false });
-            let crypto = require("crypto");
-            let hmac = crypto.createHmac("sha512", secretKey);
-            let signed = hmac.update(new Buffer(signData, 'utf-8')).digest("hex");
-            vnp_Params['vnp_SecureHash'] = signed;
-            vnpUrl += '?' + querystring.stringify(vnp_Params, { encode: false });
-
-            mCustomerID = customerID;
-            messageResponse.setStatusCode(200);
-            messageResponse.setCode("order/get-payment-url-success");
-            messageResponse.setContent("Get paymetn url success.");
-            return res.send({
-                message: messageResponse.toJSON(),
-                statusCode: 200,
-                code: "order/get-payment-URL-success",
-                paymentURL: vnpUrl,
-                timestamp: timestamp
-            });
+            await mCreatePaymentURL(req, res, customerID, productOrders, timestamp);
         } catch (e) {
             console.log("======createPaymentURL=========");
             console.log(e.message.toString());
@@ -620,110 +771,127 @@ class OrderService {
         }
     }
 
-    vnpayReturn = async (req, res) => {
+    createPaymentURLNow = async (req, res) => {
+        const customerID = req.body.customerID;
+        const productID = req.body.productID;
+        const quantityProduct = req.body.quantityProduct;
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
-        let vnp_Params = req.query;
 
         let messageResponse = new MessageResponses();
         const id = uuidv4();
         messageResponse.setId(id);
         messageResponse.setCreatedAt(timestamp);
 
-        let secureHash = vnp_Params['vnp_SecureHash'];
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-customerid", timestamp });
+        }
+        if (productID === undefined || productID.toString().trim().length == 0) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/missing-productid");
+            messageResponse.setContent("Missing productID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-productid", timestamp });
+        }
+        if (quantityProduct === undefined || parseInt(quantityProduct) == 0) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/missing-quantity");
+            messageResponse.setContent("Missing quantityProduct");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-quantity", timestamp });
+        }
 
-        delete vnp_Params['vnp_SecureHash'];
-        delete vnp_Params['vnp_SecureHashType'];
+        let isNumberType = isNumber(quantityProduct);
+        if (!isNumberType) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/quantity-nan");
+            messageResponse.setContent("Quantity not a number.");
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 400,
+                code: "order/quantity-nan",
+                timestamp
+            });
+        }
+        let quantityValue = parseInt(quantityProduct);
+        if (quantityValue <= 0) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/quantity-min-is-1");
+            messageResponse.setContent("Minimum quantity is 1.");
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 400,
+                code: "order/quantity-min-is-1",
+                timestamp
+            });
+        }
 
-        vnp_Params = sortObject(vnp_Params);
-
-        let tmnCode = process.env.vnp_TmnCode;
-        let secretKey = process.env.vnp_HashSecret;
-
-        let querystring = require('qs');
-        let signData = querystring.stringify(vnp_Params, { encode: false });
-        let crypto = require("crypto");
-        let hmac = crypto.createHmac("sha512", secretKey);
-        let signed = hmac.update(new Buffer(signData, 'utf-8')).digest("hex");
-        const ipAddress = process.env.URL;
-        // const portLocal = process.env.POST;
-        // const ipLocal = process.env.IP_LOCAL;
-        // const ipAddress = `http://${ipLocal}:${portLocal}`;
-        if (secureHash === signed) {
-            //Kiem tra xem du lieu trong db co hop le hay khong va thong bao ket qua
-            // TODO https://sandbox.vnpayment.vn/apis/docs/truy-van-hoan-tien/querydr&refund.html
-            let code = vnp_Params['vnp_ResponseCode'];
-            if (code == "00") {
-                // TODO update product, cart,...
-                try {
-                    let totalAmount = 0;
-                    let productOrders = await getProductCart(mCustomerID, id, timestamp);
-                    let productLimit = [];
-                    await Promise.all(
-                        productOrders.map(async (productOrder) => {
-                            if (parseInt(productOrder.quantity_cart) > parseInt(productOrder.quantity_product)) {
-                                productLimit.push(productOrder.product_id);
-                            }
-                        })
-                    );
-
-                    if (productLimit.length > 0) {
-                        messageResponse.setStatusCode(400);
-                        messageResponse.setCode("order/product-quantity-exceeds-the-limit");
-                        messageResponse.setContent("Product quantity exceeds the limit.");
-                        return res.send({
-                            message: messageResponse.toJSON(),
-                            statusCode: 400,
-                            code: "order/product-quantity-exceeds-the-limit",
-                            timestamp
-                        });
-                    }
-
-                    let order = new OrderModel.orderModel({
-                        customer_id: mCustomerID,
-                        payment_methods: PAYMENT_METHOD.E_BANKING.value,
-                        created_at: timestamp,
+        try {
+            let dataProduct = await ProductModel.productModel.findById(productID).lean();
+            if (dataProduct) {
+                if (quantityValue > parseInt(dataProduct.quantity)) {
+                    messageResponse.setStatusCode(400);
+                    messageResponse.setCode("order/quantity-exceeds-limit");
+                    messageResponse.setContent("Quantity exceeds the limit.");
+                    return res.send({
+                        message: messageResponse.toJSON(),
+                        statusCode: 400,
+                        code: "order/quantity-exceeds-limit",
+                        timestamp
                     });
-                    let product;
-                    await Promise.all(productOrders.map(async productOrder => {
-                        let detailOrder = new OrderDetailModel.orderDetailModel({
-                            order_id: order._id,
-                            product_id: productOrder.product_id,
-                            quantity: productOrder.quantity_cart,
-                        });
-                        product = await ProductModel.productModel.findById(productOrder.product_id);
-                        let newQuantityProduct = parseInt(product.quantity) - parseInt(productOrder.quantity_cart);
-                        product.quantity = newQuantityProduct;
-                        if (newQuantityProduct === 0) {
-                            product.status = STATUS_PRODUCT.OUT_OF_STOCK.value;
-                        }
-                        product.sold = parseInt(product.sold) + parseInt(productOrder.quantity_cart);
-                        totalAmount = parseInt(productOrder.quantity_cart) * parseInt(product.price);
-                        await product.save();
-                        await detailOrder.save();
-                        await CartModel.cartModel.findByIdAndUpdate(productOrder._id, { status: STATUS_CART.BOUGHT.value });
-                    }));
-                    order.amount = totalAmount;
-                    await order.save();
-
-                    let customer = await CustomerModel.customerModel.findById(mCustomerID);
-                    let title = "Đặt đơn hàng";
-                    let content = `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ${PAYMENT_METHOD.E_BANKING.value} với mã đơn hàng ${order._id}`;
-                    let imageProduct = product.img_cover;
-                    await NotificationService.createNotification(title, content, imageProduct, customer.fcm);
-                    return res.redirect(`${ipAddress}/v1/api/order/paySuccess`);
-                } catch (e) {
-                    console.log("===========vnpayReturn==========");
-                    console.log(e.message.toString());
-                    console.log(e.toString());
-                    return res.redirect(`${ipAddress}/v1/api/order/payFail`);
                 }
-            } else {
-                console.log("===========vnpayReturn1==========");
-                return res.redirect(`${ipAddress}/v1/api/order/payFail`);
+                await mCreatePaymentURL(req, res, customerID, dataProduct, timestamp);
             }
-        } else {
-            console.log("===========vnpayReturn2==========");
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/product-not-exist");
+            messageResponse.setContent("Product not exits.");
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 400,
+                code: "order/product-not-exist",
+                timestamp
+            });
+        } catch (e) {
+            console.log("======createPaymentURLNow=========");
+            console.log(e.message.toString());
+            console.log(e.code.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/get-payment-url-now-failed");
+            messageResponse.setContent(e.message.toString());
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 400,
+                code: "order/get-payment-URL-now-failed",
+                timestamp
+            });
+        }
+    }
+
+    vnpayReturn = async (req, res) => {
+        const ipAddress = process.env.URL;
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+        try {
+            let productOrders = await getProductCart(mCustomerID, id, timestamp);
+            if (!productOrders) {
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("order/cannot-load-product-cart");
+                messageResponse.setContent("Cannot load product cart.");
+                return res.send({
+                    message: messageResponse.toJSON(),
+                    statusCode: 400,
+                    code: "order/cannot-load-product-cart",
+                    timestamp
+                });
+            }
+            await demo(req, res, productOrders);
+        } catch (e) {
+            console.log("===========vnpayReturn==========");
+            console.log(e.message.toString());
+            console.log(e.toString());
             return res.redirect(`${ipAddress}/v1/api/order/payFail`);
         }
     }

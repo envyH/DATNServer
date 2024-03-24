@@ -587,6 +587,7 @@ class CartService {
                 message: messageResponse.toJSON(),
                 statusCode: 200,
                 productCarts: mData,
+                quantity: quantity,
                 code: "cart/create-buy-now-success",
                 timestamp
             });

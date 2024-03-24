@@ -5,10 +5,10 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const { checkPermission } = require('../middlewares/middleware');
 
-const BannerService = require('../services/banner');
+const GlobalService = require('../services/global');
 
 
-router.post("/get", checkPermission, BannerService.getList);
+router.get("/ping", GlobalService.ping);
 
 
 module.exports = router

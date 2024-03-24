@@ -12,6 +12,7 @@ const customerRouter = require('./customer');
 const authTokenRouter = require('./auth.token');
 const notificationRouter = require('./notification');
 const overlayMessageRouter = require('./overlay.message');
+const globalRouter = require('./global');
 
 
 router.use('/banner', bannerRouter);
@@ -24,6 +25,7 @@ router.use('/customer', customerRouter);
 router.use('/auth', authTokenRouter);
 router.use('/notification', notificationRouter);
 router.use('/overlay/message', overlayMessageRouter);
+router.use('/global', globalRouter);
 
 
 module.exports = router;
