@@ -760,7 +760,6 @@ class OrderService {
         } catch (e) {
             console.log("======createPaymentURL=========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("order/get-payment-url-failed");
             messageResponse.setContent(e.message.toString());
@@ -830,6 +829,7 @@ class OrderService {
         }
 
         try {
+            let productOrders = [];
             let dataProduct = await ProductModel.productModel.findById(productID).lean();
             if (dataProduct) {
                 if (quantityValue > parseInt(dataProduct.quantity)) {
@@ -843,7 +843,8 @@ class OrderService {
                         timestamp
                     });
                 }
-                await mCreatePaymentURL(req, res, customerID, dataProduct, timestamp);
+                productOrders.push(dataProduct);
+                await mCreatePaymentURL(req, res, customerID, productOrders, timestamp);
             }
             messageResponse.setStatusCode(400);
             messageResponse.setCode("order/product-not-exist");
@@ -857,7 +858,6 @@ class OrderService {
         } catch (e) {
             console.log("======createPaymentURLNow=========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("order/get-payment-url-now-failed");
             messageResponse.setContent(e.message.toString());
@@ -908,7 +908,7 @@ class OrderService {
         const id = uuidv4();
         messageResponse.setId(id);
         messageResponse.setCreatedAt(timestamp);
-        try { 
+        try {
             await mVnpReturn(req, res, mProductOrders);
         } catch (e) {
             console.log("===========vnpayReturn==========");
