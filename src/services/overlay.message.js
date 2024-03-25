@@ -91,7 +91,7 @@ class OverlayMessageService {
                 _id: overlayMessageID,
                 status: STATUS_OVERLAY_MESSAGE.DEFAULT.value
             }
-            const update = { status: STATUS_OVERLAY_MESSAGE.WATCHED.value };
+            const update = { status: STATUS_OVERLAY_MESSAGE.SEEN.value };
             await OverlayMessagesModel.overlayMessageModel.findOneAndUpdate(filter, update).lean();
             messageResponse.setStatusCode(200);
             messageResponse.setCode("overlay/update-status-success");

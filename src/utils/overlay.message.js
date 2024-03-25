@@ -1,5 +1,5 @@
 const STATUS_OVERLAY_MESSAGE = {
-    WATCHED: { value: 0 },
+    SEEN: { value: 0 },
     DEFAULT: { value: 1 },
 };
 
