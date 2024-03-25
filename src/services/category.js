@@ -44,7 +44,6 @@ class CategoryService {
         } catch (e) {
             console.log("======getList========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("category/get-failed");
             messageResponse.setContent(e.message.toString());

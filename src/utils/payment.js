@@ -1,5 +1,5 @@
 const PAYMENT_METHOD = {
-    ON_DELIVERY: { value: 0 },
+    DELIVERY: { value: 0 },
     E_BANKING: { value: 1 },
     ZALO_PAY: { value: 2 }
 };

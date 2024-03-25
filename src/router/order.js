@@ -7,6 +7,8 @@ const { checkPermission } = require('../middlewares/middleware');
 const OrderService = require('../services/order');
 
 
+router.post("/create/delivery", checkPermission, OrderService.createOrderDelivery);
+
 router.post("/get/amount-zalopay", checkPermission, OrderService.getAmountZaloPay);
 router.post("/get/amount-zalopay-now", checkPermission, OrderService.getAmountZaloPayNow);
 router.post("/create/zalopay", checkPermission, OrderService.createOrderZaloPay);

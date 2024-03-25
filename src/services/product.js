@@ -44,7 +44,6 @@ class ProductService {
         } catch (e) {
             console.log("=========getList=========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("product/get-failed");
             messageResponse.setContent(e.message.toString());
@@ -99,7 +98,6 @@ class ProductService {
         } catch (e) {
             console.log("=======getDetail==========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("product/get-detail-failed");
             messageResponse.setContent(e.message.toString());
@@ -151,7 +149,6 @@ class ProductService {
         } catch (e) {
             console.log("========getListByCateID==========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("product/get-by-cateid-failed");
             messageResponse.setContent(e.message.toString());
@@ -207,7 +204,6 @@ class ProductService {
         } catch (e) {
             console.log("========searchByKeyword==========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("product/search-failed");
             messageResponse.setContent(e.message.toString());

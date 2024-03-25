@@ -50,7 +50,6 @@ class OverlayMessageService {
         } catch (e) {
             console.log("=========getList==========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("overlay/get-failed");
             messageResponse.setContent(e.message.toString());
@@ -106,7 +105,6 @@ class OverlayMessageService {
         } catch (e) {
             console.log("=========updateStatus==========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("overlay/update-status-failed");
             messageResponse.setContent(e.message.toString());

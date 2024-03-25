@@ -192,7 +192,6 @@ class CartService {
         } catch (e) {
             console.log("========addToCart=========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("cart/add-failed");
             messageResponse.setContent(e.message.toString());
@@ -237,7 +236,6 @@ class CartService {
         } catch (e) {
             console.log("========getByCustomerID==========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("cart/getbycustomerid-failed");
             messageResponse.setContent(e.message.toString());
@@ -351,7 +349,6 @@ class CartService {
         } catch (e) {
             console.log("========updateQuanity========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("cart/update-quantity-failed");
             messageResponse.setContent(e.message.toString());
@@ -437,7 +434,6 @@ class CartService {
         } catch (e) {
             console.log("=======updateStatus==========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("cart/update-status-failed");
             messageResponse.setContent(e.message.toString());
@@ -513,7 +509,6 @@ class CartService {
         } catch (e) {
             console.log("=========updateStatusAll==========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("cart/update-status-all-failed");
             messageResponse.setContent(e.message.toString());
@@ -594,7 +589,6 @@ class CartService {
         } catch (e) {
             console.log("============buyNow===========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("cart/buy-now-failed");
             messageResponse.setContent(e.message.toString());
@@ -662,7 +656,6 @@ class CartService {
         } catch (e) {
             console.log("===========buyNowCart============");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("cart/buy-now-cart-failed");
             messageResponse.setContent(e.message.toString());

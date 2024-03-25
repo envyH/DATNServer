@@ -32,7 +32,6 @@ const getProductCart = async (customerID, messageResponseID, timestamp) => {
                 dataProduct.push(prodductInfo);
             } catch (e) {
                 console.log(e.message.toString());
-                console.log(e.code.toString());
                 messageResponse.setStatusCode(400);
                 messageResponse.setCode("cart/getproductinfo-failed");
                 messageResponse.setContent(e.message.toString());
@@ -103,7 +102,6 @@ class CheckoutService {
         } catch (e) {
             console.log("=========getProductCheckout=========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("checkout/get-productcheckout-success");
             messageResponse.setContent(e.message.toString());
@@ -135,7 +133,7 @@ class CheckoutService {
 
         try {
             let paymentMethod = new Map();
-            paymentMethod.set(PAYMENT_METHOD.ON_DELIVERY.value, "Thanh toán khi nhận hàng");
+            paymentMethod.set(PAYMENT_METHOD.DELIVERY.value, "Thanh toán khi nhận hàng");
             paymentMethod.set(PAYMENT_METHOD.E_BANKING.value, "E-Banking");
             paymentMethod.set(PAYMENT_METHOD.ZALO_PAY.value, "ZaloPay");
             // console.log(paymentMethod.get(PAYMENT_METHOD.ON_DELIVERY.value));
@@ -156,7 +154,6 @@ class CheckoutService {
         } catch (e) {
             console.log("=========getPaymentMethod===========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("checkout/get-payment-method-failed");
             messageResponse.setContent(e.message.toString());

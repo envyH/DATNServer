@@ -44,7 +44,6 @@ class BannerService {
         } catch (e) {
             console.log("=========getList==========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("banner/get-failed");
             messageResponse.setContent(e.message.toString());

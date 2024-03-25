@@ -40,7 +40,6 @@ class AuthTokenService {
         } catch (e) {
             console.log("========create=======");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("auth/create-failed");
             messageResponse.setContent(e.message.toString());
@@ -101,14 +100,13 @@ class AuthTokenService {
         } catch (e) {
             console.log("=========delete==========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
-            messageResponse.setCode(`auth/${e.code.toString()}`);
+            messageResponse.setCode(`auth/delete-failed`);
             messageResponse.setContent(e.message.toString());
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 400,
-                code: `auth/${e.code.toString()}`,
+                code: `auth/delete-failed`,
                 timestamp
             });
         }

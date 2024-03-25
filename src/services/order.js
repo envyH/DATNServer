@@ -125,7 +125,8 @@ const mGetAmountZaloPay = async (req, res, productOrders, messageResponse, times
         });
     }
 }
-const mCreateOrderZaloPay = async (req, res, customerID, productOrders, messageResponse, timestamp) => {
+
+const mCreateOrder = async (res, customerID, productOrders, messageResponse, timestamp, typeBuy) => {
     try {
         let totalAmount = 0;
         let productLimit = [];
@@ -151,7 +152,7 @@ const mCreateOrderZaloPay = async (req, res, customerID, productOrders, messageR
 
         let order = new OrderModel.orderModel({
             customer_id: customerID,
-            payment_methods: PAYMENT_METHOD.ZALO_PAY.value,
+            payment_methods: typeBuy,
             created_at: timestamp,
         });
 
@@ -180,31 +181,38 @@ const mCreateOrderZaloPay = async (req, res, customerID, productOrders, messageR
 
         let customer = await CustomerModel.customerModel.findById(customerID);
         let imageProduct = product.img_cover;
-        let title = "Đặt đơn hàng";
-        let message = `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán ZALOPAY với mã đơn hàng ${order._id}`;
-        await NotificationService.createNotification(title, message, imageProduct, customer.fcm, PAYMENT_METHOD.ZALO_PAY.value);
+        let title = "Đặt hàng thành công";
+        let paymentMethod = "";
+        if (typeBuy === PAYMENT_METHOD.ZALO_PAY.value) {
+            paymentMethod = "ZALOPAY";
+        } else if (typeBuy === PAYMENT_METHOD.E_BANKING) {
+            paymentMethod = "E-Banking";
+        } else {
+            paymentMethod = "Tiền mặt";
+        }
+        let message = `Bạn đã đặt một đơn hàng: ${product.name} vào lúc: ${timestamp} phương thức thanh toán ${paymentMethod} với mã đơn hàng #${order._id}`;
+        await NotificationService.createNotification(title, message, imageProduct, customer.fcm, typeBuy);
         messageResponse.setStatusCode(200);
-        messageResponse.setCode("order/create-order-zalopay-success");
+        messageResponse.setCode("order/create-order-success");
         messageResponse.setTitle(title);
         messageResponse.setContent(message);
         messageResponse.setImage(imageProduct);
         return res.send({
             message: messageResponse.toJSON(),
             statusCode: 200,
-            code: "order/create-order-zalopay-success",
+            code: "order/create-order-success",
             timestamp
         });
     } catch (e) {
-        console.log("=========mCreateOrderZaloPay===========");
+        console.log("=========mCreateOrder===========");
         console.log(e.message.toString());
-        console.log(e.code.toString());
         messageResponse.setStatusCode(400);
-        messageResponse.setCode("order/create-order-zalopay-failed");
+        messageResponse.setCode("order/create-order-failed");
         messageResponse.setContent(e.message.toString());
         return res.send({
             message: e.message.toString(),
             statusCode: 400,
-            code: "order/create-order-zalopay-failed",
+            code: "order/create-order-failed",
             timestamp
         });
     }
@@ -326,7 +334,6 @@ const mCreatePaymentURL = async (req, res, customerID, productOrders, timestamp,
     } catch (e) {
         console.log("======mCreatePaymentURL=========");
         console.log(e.message.toString());
-        console.log(e.code.toString());
         messageResponse.setStatusCode(400);
         messageResponse.setCode("order/get-payment-url-failed");
         messageResponse.setContent(e.message.toString());
@@ -439,7 +446,7 @@ const mVnpReturn = async (req, res, productOrders, type) => {
                 await order.save();
 
                 let customer = await CustomerModel.customerModel.findById(mCustomerID);
-                let title = "Đặt đơn hàng";
+                let title = "Đặt hàng thành công";
                 let content = `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán E-Banking với mã đơn hàng ${order._id}`;
                 let imageProduct = product.img_cover;
                 await NotificationService.createNotification(title, content, imageProduct, customer.fcm, PAYMENT_METHOD.E_BANKING.value);
@@ -461,6 +468,41 @@ const mVnpReturn = async (req, res, productOrders, type) => {
 }
 
 class OrderService {
+    createOrderDelivery = async (req, res) => {
+        const customerID = req.body.customerID;
+
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-customerid", timestamp });
+        }
+
+        try {
+            let productOrders = await getProductCart(customerID, id, timestamp);
+            await mCreateOrder(res, customerID, productOrders, messageResponse, timestamp, PAYMENT_METHOD.DELIVERY.value);
+        } catch (e) {
+            console.log("=========createOrderDelivery===========");
+            console.log(e.message.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/create-order-delivery-failed");
+            messageResponse.setContent(e.message.toString());
+            return res.send({
+                message: e.message.toString(),
+                statusCode: 400,
+                code: "order/create-order-delivery-failed",
+                timestamp
+            });
+        }
+    }
     getAmountZaloPay = async (req, res) => {
         const customerID = req.body.customerID;
         const type = req.body.type;
@@ -626,11 +668,10 @@ class OrderService {
 
         try {
             let productOrders = await getProductCart(customerID, id, timestamp);
-            await mCreateOrderZaloPay(req, res, customerID, productOrders, messageResponse, timestamp);
+            await mCreateOrder(res, customerID, productOrders, messageResponse, timestamp, PAYMENT_METHOD.ZALO_PAY.value);
         } catch (e) {
             console.log("=========createOrderZaloPay===========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("order/create-order-zalopay-failed");
             messageResponse.setContent(e.message.toString());
@@ -669,11 +710,10 @@ class OrderService {
         }
 
         try {
-            await mCreateOrderZaloPay(req, res, customerID, productOrders, messageResponse, timestamp);
+            await mCreateOrder(res, customerID, productOrders, messageResponse, timestamp, PAYMENT_METHOD.ZALO_PAY.value);
         } catch (e) {
             console.log("=========createOrderZaloPayNow============");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
             messageResponse.setCode("order/create-order-zalopay-now-failed");
             messageResponse.setContent(e.message.toString());

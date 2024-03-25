@@ -255,14 +255,13 @@ class CustomerService {
         } catch (e) {
             console.log("=========verify=========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
-            messageResponse.setCode(e.code.toString());
+            messageResponse.setCode("auth/verify-failed");
             messageResponse.setContent(e.message.toString());
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 400,
-                code: `auth/${e.code}`,
+                code: `auth/verify-failed`,
                 timestamp
             });
         }
@@ -446,14 +445,13 @@ class CustomerService {
         } catch (e) {
             console.log("=========login=========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
-            messageResponse.getCode(`auth/${e.code.toString()}`);
+            messageResponse.getCode(`auth/login-failed`);
             messageResponse.setContent(e.message.toString());
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 400,
-                code: `auth/${e.code.toString()}`,
+                code: `auth/login-failed`,
                 timestamp
             });
         }
@@ -544,13 +542,12 @@ class CustomerService {
         } catch (e) {
             console.log("=========checkLogin=========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
-            messageResponse.setCode(`auth/${e.code.toString()}`);
+            messageResponse.setCode(`auth/check-login-failed`);
             messageResponse.setContent(e.message.toString());
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 200,
-                code: `auth/${e.code.toString()}`,
+                code: `auth/check-login-failed`,
                 timestamp
             });
         }
@@ -645,14 +642,13 @@ class CustomerService {
         } catch (e) {
             console.log("===========verifyLogin===========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
-            messageResponse.setCode(`auth/${e.code.toString()}`);
+            messageResponse.setCode(`auth/verify-failed`);
             messageResponse.setContent(e.message.toString());
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 400,
-                code: `auth/${e.code.toString()}`,
+                code: `auth/verify-failed`,
                 timestamp
             });
         }
@@ -710,14 +706,13 @@ class CustomerService {
         } catch (e) {
             console.log("==========addFCM==========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
-            messageResponse.setCode(`auth/${e.code.toString()}`);
+            messageResponse.setCode(`auth/add-fcm-failed`);
             messageResponse.setContent(e.message.toString());
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 400,
-                code: `auth/${e.code.toString()}`,
+                code: `auth/add-fcm-failed`,
                 timestamp
             })
         }
@@ -779,14 +774,13 @@ class CustomerService {
         } catch (e) {
             console.log("==========logout==========");
             console.log(e.message.toString());
-            console.log(e.code.toString());
             messageResponse.setStatusCode(400);
-            messageResponse.setCode(`auth/${e.code.toString()}`);
+            messageResponse.setCode(`auth/logout-failed`);
             messageResponse.setContent(e.message.toString());
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 400,
-                code: `auth/${e.code.toString()}`,
+                code: `auth/logout-failed`,
                 timestamp
             });
         }
