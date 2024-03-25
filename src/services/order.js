@@ -191,7 +191,7 @@ const mCreateOrder = async (res, customerID, productOrders, messageResponse, tim
             paymentMethod = "Tiền mặt";
         }
         let message = `Bạn đã đặt một đơn hàng: ${product.name} vào lúc: ${timestamp} phương thức thanh toán ${paymentMethod} với mã đơn hàng #${order._id}`;
-        await NotificationService.createNotification(title, message, imageProduct, customer.fcm, typeBuy);
+        await NotificationService.createNotification(customerID, title, message, imageProduct, customer.fcm, typeBuy);
         messageResponse.setStatusCode(200);
         messageResponse.setCode("order/create-order-success");
         messageResponse.setTitle(title);
@@ -449,7 +449,7 @@ const mVnpReturn = async (req, res, productOrders, type) => {
                 let title = "Đặt hàng thành công";
                 let content = `Bạn đã đặt một đơn hàng vào lúc ${timestamp} phương thức thanh toán E-Banking với mã đơn hàng ${order._id}`;
                 let imageProduct = product.img_cover;
-                await NotificationService.createNotification(title, content, imageProduct, customer.fcm, PAYMENT_METHOD.E_BANKING.value);
+                await NotificationService.createNotification(mCustomerID, title, content, imageProduct, customer.fcm, PAYMENT_METHOD.E_BANKING.value);
                 return res.redirect(`${ipAddress}/v1/api/order/paySuccess`);
             } catch (e) {
                 console.log("===========mVnpayReturn==========");

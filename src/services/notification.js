@@ -17,12 +17,13 @@ const MessageResponses = require('../models/model.message.response');
 
 
 class NotificationService {
-    createNotification = async (title, content, img, fcm, type) => {
+    createNotification = async (customerID, title, content, img, fcm, type) => {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
         // create notification
         let notification = new NotificationModel.notificationModel({
+            customer_id: customerID,
             title: title,
             content: content,
             image: img,
@@ -49,13 +50,8 @@ class NotificationService {
             });
     }
 
-    createNotification2 = async (req, res) => {
-        const title = req.body.title;
-        const content = req.body.content;
-        const img = req.body.img;
-        const fcm = req.body.fcm;
-        const type = req.body.type;
-
+    getList = async (req, res) => {
+        const customerID = req.body.customerID;
 
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
@@ -64,6 +60,65 @@ class NotificationService {
         const id = uuidv4();
         messageResponse.setId(id);
         messageResponse.setCreatedAt(timestamp);
+
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("notification/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "notification/missing-customerid", timestamp });
+        }
+        try {
+            const filter = {
+                customer_id: customerID
+            }
+            let notifications = await NotificationModel.notificationModel.find(filter).lean();
+            messageResponse.setStatusCode(200);
+            messageResponse.setCode("notification/get-success");
+            messageResponse.setContent("Get list notification success.");
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 200,
+                code: "notification/get-success",
+                notifications: notifications,
+                timestamp
+            });
+        } catch (e) {
+            console.log("======getList========");
+            console.log(e.message.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("notification/get-failed");
+            messageResponse.setContent(e.message.toString());
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 400,
+                code: "notification/get-failed",
+                timestamp
+            });
+        }
+    }
+
+    createNotification2 = async (req, res) => {
+        const customerID = req.body.customerID;
+        const title = req.body.title;
+        const content = req.body.content;
+        const img = req.body.img;
+        const fcm = req.body.fcm;
+        const type = req.body.type;
+
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("notification/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "notification/missing-customerid", timestamp });
+        }
 
         if (title === undefined || title.toString().trim().length == 0) {
             messageResponse.setStatusCode(400);
@@ -92,6 +147,7 @@ class NotificationService {
 
         // create notification
         let notification = new NotificationModel.notificationModel({
+            customer_id: customerID,
             title: title,
             content: content,
             image: img,

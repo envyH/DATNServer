@@ -33,7 +33,7 @@ class CategoryService {
             let category = await CategoryModel.categoryModel.find().lean();
             messageResponse.setStatusCode(200);
             messageResponse.setCode("category/get-success");
-            messageResponse.setContent("get list category success");
+            messageResponse.setContent("Get list category success.");
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 200,
