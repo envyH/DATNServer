@@ -17,7 +17,7 @@ const { checkPaymentMethod, PAYMENT_METHOD } = require('../utils/payment');
 const { checkStatusBuy, STATUS_BUY } = require('../utils/buy');
 
 const { admin } = require('../configs/firebase/index');
-const { sortObject } = require('../utils/order');
+const { sortObject, STATUS_ORDER } = require('../utils/order');
 const { title } = require('process');
 
 
@@ -79,6 +79,55 @@ const getProductCart = async (customerID, messageResponseID, timestamp) => {
         }
     }
     return mData;
+}
+
+const mGetProductOrder = async (dataOrder, messageResponseID, timestamp) => {
+    let messageResponse = new MessageResponses();
+    messageResponse.setId(messageResponseID);
+    messageResponse.setCreatedAt(timestamp);
+
+    let mDataDetailOrder = [];
+    await Promise.all(
+        dataOrder.map(async (order) => {
+            try {
+                let rawData = {
+                    order_id: order._id,
+                    created_at: order.created_at
+                };
+                let dataOrderDetail = await OrderDetailModel.orderDetailModel.find({ order_id: order._id }).lean();
+                if (dataOrderDetail) {
+                    let mProductID = [];
+                    let mProductQuantity = [];
+                    let mOrderDetailID = [];
+                    for (let orderDetail of dataOrderDetail) {
+                        let dataProduct = await ProductModel.productModel.findById(orderDetail.product_id).lean();
+                        mProductID.push(dataProduct);
+                        mProductQuantity.push(orderDetail.quantity);
+                        mOrderDetailID.push(orderDetail._id);
+                    }
+                    rawData.products = mProductID;
+                    rawData.productsQuantity = mProductQuantity;
+                    rawData.orderDetailID = mOrderDetailID;
+                    rawData.amount = order.amount;
+                    mDataDetailOrder.push(rawData);
+                }
+            } catch (e) {
+                console.log("=======mGetProductOrder=========");
+                console.log(e.message.toString());
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("order/get-product-order-failed");
+                messageResponse.setContent(e.message.toString());
+                return res.send({
+                    message: messageResponse.toJSON(),
+                    statusCode: 400,
+                    code: "order/get-product-order-failed",
+                    timestamp
+                });
+            }
+        })
+    );
+
+    return mDataDetailOrder;
 }
 
 const mGetAmountZaloPay = async (req, res, productOrders, messageResponse, timestamp) => {
@@ -468,6 +517,81 @@ const mVnpReturn = async (req, res, productOrders, type) => {
 }
 
 class OrderService {
+
+    getAllOrders = async (req, res) => {
+        const customerID = req.body.customerID;
+
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-customerid", timestamp });
+        }
+
+        try {
+            const filters = {
+                customer_id: customerID,
+                status: {
+                    $in: [
+                        STATUS_ORDER.WAITCONFIRM.value,
+                        STATUS_ORDER.PREPARE.value,
+                        STATUS_ORDER.IN_TRANSIT.value,
+                        STATUS_ORDER.PAID.value,
+                        STATUS_ORDER.CANCEL.value
+                    ]
+                }
+            };
+
+            let dataAllOrders = await OrderModel.orderModel.find(filters).lean();
+
+            let dataOrderWaiting = dataAllOrders.filter(order => order.status === STATUS_ORDER.WAITCONFIRM.value);
+            let dataOrderPrepare = dataAllOrders.filter(order => order.status === STATUS_ORDER.PREPARE.value);
+            let dataOrderInTransit = dataAllOrders.filter(order => order.status === STATUS_ORDER.IN_TRANSIT.value);
+            let dataOrderPaid = dataAllOrders.filter(order => order.status === STATUS_ORDER.PAID.value);
+            let dataOrderCancel = dataAllOrders.filter(order => order.status === STATUS_ORDER.CANCEL.value);
+
+            const orders = [dataOrderWaiting, dataOrderPrepare, dataOrderInTransit, dataOrderPaid, dataOrderCancel];
+            const ordersKey = ["waitingList", "prepareList", "inTransitList", "paidList", "cancelList"]; // match client
+            const dataProductOrders = {};
+            for (let i = 0; i < orders.length; i++) {
+                const dataProductOrder = await mGetProductOrder(orders[i], id, timestamp);
+                dataProductOrders[ordersKey[i]] = dataProductOrder;
+            }
+            console.log("===================");
+            console.log(dataProductOrders);
+            messageResponse.setStatusCode(200);
+            messageResponse.setCode("order/get-all-order-success");
+            messageResponse.setContent("Get all order success.");
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 200,
+                ordersDetail: dataProductOrders,
+                code: "order/get-all-order-success",
+                timestamp
+            });
+        } catch (e) {
+            console.log("=======getAllOrders=========");
+            console.log(e.message.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/get-product-order-failed");
+            messageResponse.setContent(e.message.toString());
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 400,
+                code: "order/get-all-order-failed",
+                timestamp
+            });
+        }
+    }
+
     createOrderDelivery = async (req, res) => {
         const customerID = req.body.customerID;
 

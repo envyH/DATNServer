@@ -9,5 +9,6 @@ const orderDetailSchema = mongoose.Schema({
 }, {
     collection: "OrderDetails",
 });
+
 const orderDetailModel = mongoose.model("orderdetails", orderDetailSchema);
 module.exports = { orderDetailModel };

@@ -1,7 +1,9 @@
 const STATUS_ORDER = {
     WAITCONFIRM: { value: 0 },
-    DEMO1: { value: 1 },
-    DEMO2: { value: 2 }
+    PREPARE: { value: 1 },
+    IN_TRANSIT: { value: 2 },
+    PAID: { value: 3 },
+    CANCEL: { value: 4 }
 };
 
 
