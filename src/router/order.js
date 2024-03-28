@@ -9,7 +9,7 @@ const OrderService = require('../services/order');
 
 
 
-router.post("/get/all", checkPermission, OrderService.getAllOrders);
+router.post("/get/all", checkPermission, OrderService.getAllOrdersPlus);
 
 router.post("/create/delivery", checkPermission, OrderService.createOrderDelivery);
 

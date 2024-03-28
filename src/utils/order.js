@@ -1,5 +1,5 @@
 const STATUS_ORDER = {
-    WAITCONFIRM: { value: 0 },
+    WAIT_CONFIRM: { value: 0 },
     PREPARE: { value: 1 },
     IN_TRANSIT: { value: 2 },
     PAID: { value: 3 },

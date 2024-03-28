@@ -81,7 +81,7 @@ const getProductCart = async (customerID, messageResponseID, timestamp) => {
     return mData;
 }
 
-const mGetProductOrder = async (dataOrder, messageResponseID, timestamp) => {
+const mGetProductOrder = async (res, dataOrder, messageResponseID, timestamp) => {
     let messageResponse = new MessageResponses();
     messageResponse.setId(messageResponseID);
     messageResponse.setCreatedAt(timestamp);
@@ -129,6 +129,78 @@ const mGetProductOrder = async (dataOrder, messageResponseID, timestamp) => {
 
     return mDataDetailOrder;
 }
+
+const mGetProductOrderPlus = async (res, dataAllOrders, messageResponseID, timestamp) => {
+    const dataProductOrders = {};
+    const statuses = Object.values(STATUS_ORDER);
+    const ordersKey = ["waitingList", "prepareList", "inTransitList", "paidList", "cancelList"]; // match client
+    await Promise.all(statuses.map(async (status, i) => {
+        const dataOrders = await mGetProductOrderWithStatus(res, dataAllOrders, messageResponseID, timestamp, status.value);
+        dataProductOrders[ordersKey[i]] = dataOrders;
+    }));
+    return dataProductOrders;
+}
+
+
+const mGetProductOrderWithStatus = async (res, dataOrder, messageResponseID, timestamp, status) => {
+    let messageResponse = new MessageResponses();
+    messageResponse.setId(messageResponseID);
+    messageResponse.setCreatedAt(timestamp);
+
+    let mDataDetailOrder = [];
+    await Promise.all(
+        dataOrder.map(async (order) => {
+            try {
+                let rawData = {
+                    order_id: order._id,
+                    created_at: order.created_at
+                };
+                let dataOrderDetail = await OrderDetailModel.orderDetailModel.find({ order_id: order._id }).lean();
+                if (dataOrderDetail) {
+                    let mProduct = [];
+                    let mProductQuantity = [];
+                    let mOrderDetailID = [];
+                    let mOrderDetailStatus = [];
+                    let isSave = false;
+                    for (let orderDetail of dataOrderDetail) {
+                        if (status === orderDetail.status) {
+                            let dataProduct = await ProductModel.productModel.findById(orderDetail.product_id).lean();
+                            mProduct.push(dataProduct);
+                            mProductQuantity.push(orderDetail.quantity);
+                            mOrderDetailID.push(orderDetail._id);
+                            mOrderDetailStatus.push(orderDetail.status);
+                            isSave = true;
+                        }
+                    }
+                    if (isSave) {
+                        rawData.products = mProduct;
+                        rawData.productsQuantity = mProductQuantity;
+                        rawData.orderDetailID = mOrderDetailID;
+                        rawData.orderDetailStatus = mOrderDetailStatus;
+                        rawData.amount = order.amount;
+                        mDataDetailOrder.push(rawData);
+                    }
+                }
+            } catch (e) {
+                console.log("=======mGetProductOrderPlus=========");
+                console.log(e.message.toString());
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("order/get-product-order-failed");
+                messageResponse.setContent(e.message.toString());
+                return res.send({
+                    message: messageResponse.toJSON(),
+                    statusCode: 400,
+                    code: "order/get-product-order-failed",
+                    timestamp
+                });
+            }
+        }
+        )
+    );
+
+    return mDataDetailOrder;
+}
+
 
 const mGetAmountZaloPay = async (req, res, productOrders, messageResponse, timestamp) => {
     try {
@@ -211,6 +283,7 @@ const mCreateOrder = async (res, customerID, productOrders, messageResponse, tim
                 product_id: productOrder.product_id,
                 payment_methods: typeBuy,
                 quantity: productOrder.quantity_cart,
+                created_at: timestamp
             });
             product = await ProductModel.productModel.findById(productOrder.product_id);
             let newQuantityProduct = parseInt(product.quantity) - parseInt(productOrder.quantity_cart);
@@ -476,6 +549,7 @@ const mVnpReturn = async (req, res, productOrders, type) => {
                         product_id: productOrder.product_id,
                         payment_methods: PAYMENT_METHOD.E_BANKING.value,
                         quantity: productOrder.quantity_cart,
+                        created_at: timestamp
                     });
                     product = await ProductModel.productModel.findById(productOrder.product_id);
                     let newQuantityProduct = parseInt(product.quantity) - parseInt(productOrder.quantity_cart);
@@ -518,6 +592,75 @@ const mVnpReturn = async (req, res, productOrders, type) => {
 
 class OrderService {
 
+    getAllOrdersPlus = async (req, res) => {
+        const customerID = req.body.customerID;
+
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+        let messageResponse = new MessageResponses();
+        const id = uuidv4();
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
+        if (customerID === undefined || customerID.toString().trim().length == 0) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/missing-customerid");
+            messageResponse.setContent("Missing customerID");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "order/missing-customerid", timestamp });
+        }
+
+        try {
+            const filters = {
+                customer_id: customerID,
+            };
+            let dataAllOrders = await OrderModel.orderModel.find(filters).lean();
+            const dataProductOrders = await mGetProductOrderPlus(res, dataAllOrders, id, timestamp);
+            // const [
+            //     dataOrderWaiting,
+            //     dataOrderPrepare,
+            //     dataOrderInTransit,
+            //     dataOrderPaid,
+            //     dataOrderCancel
+            // ] = await Promise.all([
+            //     mGetProductOrderPlus(res, dataAllOrders, id, timestamp, STATUS_ORDER.WAIT_CONFIRM.value),
+            //     mGetProductOrderPlus(res, dataAllOrders, id, timestamp, STATUS_ORDER.PREPARE.value),
+            //     mGetProductOrderPlus(res, dataAllOrders, id, timestamp, STATUS_ORDER.IN_TRANSIT.value),
+            //     mGetProductOrderPlus(res, dataAllOrders, id, timestamp, STATUS_ORDER.PAID.value),
+            //     mGetProductOrderPlus(res, dataAllOrders, id, timestamp, STATUS_ORDER.CANCEL.value)
+            // ]);
+            // const dataProductOrders = Object.fromEntries([
+            //     ["waitingList", dataOrderWaiting],
+            //     ["prepareList", dataOrderPrepare],
+            //     ["inTransitList", dataOrderInTransit],
+            //     ["paidList", dataOrderPaid],
+            //     ["cancelList", dataOrderCancel]
+            // ]);
+            messageResponse.setStatusCode(200);
+            messageResponse.setCode("order/get-all-order-success");
+            messageResponse.setContent("Get all order success.");
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 200,
+                ordersDetail: dataProductOrders,
+                code: "order/get-all-order-success",
+                timestamp
+            });
+        } catch (e) {
+            console.log("=======getAllOrders=========");
+            console.log(e.message.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("order/get-product-order-failed");
+            messageResponse.setContent(e.message.toString());
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 400,
+                code: "order/get-all-order-failed",
+                timestamp
+            });
+        }
+    }
+
     getAllOrders = async (req, res) => {
         const customerID = req.body.customerID;
 
@@ -541,7 +684,7 @@ class OrderService {
                 customer_id: customerID,
                 status: {
                     $in: [
-                        STATUS_ORDER.WAITCONFIRM.value,
+                        STATUS_ORDER.WAIT_CONFIRM.value,
                         STATUS_ORDER.PREPARE.value,
                         STATUS_ORDER.IN_TRANSIT.value,
                         STATUS_ORDER.PAID.value,
@@ -552,7 +695,7 @@ class OrderService {
 
             let dataAllOrders = await OrderModel.orderModel.find(filters).lean();
 
-            let dataOrderWaiting = dataAllOrders.filter(order => order.status === STATUS_ORDER.WAITCONFIRM.value);
+            let dataOrderWaiting = dataAllOrders.filter(order => order.status === STATUS_ORDER.WAIT_CONFIRM.value);
             let dataOrderPrepare = dataAllOrders.filter(order => order.status === STATUS_ORDER.PREPARE.value);
             let dataOrderInTransit = dataAllOrders.filter(order => order.status === STATUS_ORDER.IN_TRANSIT.value);
             let dataOrderPaid = dataAllOrders.filter(order => order.status === STATUS_ORDER.PAID.value);
@@ -562,7 +705,7 @@ class OrderService {
             const ordersKey = ["waitingList", "prepareList", "inTransitList", "paidList", "cancelList"]; // match client
             const dataProductOrders = {};
             for (let i = 0; i < orders.length; i++) {
-                const dataProductOrder = await mGetProductOrder(orders[i], id, timestamp);
+                const dataProductOrder = await mGetProductOrder(res, orders[i], id, timestamp);
                 dataProductOrders[ordersKey[i]] = dataProductOrder;
             }
             // console.log("===================");
