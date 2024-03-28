@@ -201,7 +201,6 @@ const mCreateOrder = async (res, customerID, productOrders, messageResponse, tim
 
         let order = new OrderModel.orderModel({
             customer_id: customerID,
-            payment_methods: typeBuy,
             created_at: timestamp,
         });
 
@@ -210,6 +209,7 @@ const mCreateOrder = async (res, customerID, productOrders, messageResponse, tim
             let detailOrder = new OrderDetailModel.orderDetailModel({
                 order_id: order._id,
                 product_id: productOrder.product_id,
+                payment_methods: typeBuy,
                 quantity: productOrder.quantity_cart,
             });
             product = await ProductModel.productModel.findById(productOrder.product_id);
@@ -467,7 +467,6 @@ const mVnpReturn = async (req, res, productOrders, type) => {
 
                 let order = new OrderModel.orderModel({
                     customer_id: mCustomerID,
-                    payment_methods: PAYMENT_METHOD.E_BANKING.value,
                     created_at: timestamp,
                 });
                 let product;
@@ -475,6 +474,7 @@ const mVnpReturn = async (req, res, productOrders, type) => {
                     let detailOrder = new OrderDetailModel.orderDetailModel({
                         order_id: order._id,
                         product_id: productOrder.product_id,
+                        payment_methods: PAYMENT_METHOD.E_BANKING.value,
                         quantity: productOrder.quantity_cart,
                     });
                     product = await ProductModel.productModel.findById(productOrder.product_id);
@@ -565,8 +565,8 @@ class OrderService {
                 const dataProductOrder = await mGetProductOrder(orders[i], id, timestamp);
                 dataProductOrders[ordersKey[i]] = dataProductOrder;
             }
-            console.log("===================");
-            console.log(dataProductOrders);
+            // console.log("===================");
+            // console.log(dataProductOrders);
             messageResponse.setStatusCode(200);
             messageResponse.setCode("order/get-all-order-success");
             messageResponse.setContent("Get all order success.");
