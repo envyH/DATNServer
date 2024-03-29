@@ -5,7 +5,7 @@ const STATUS_ORDER = {
     PAID: { value: 3 },
     CANCEL: { value: 4 }
 };
-
+const ORDERS_KEY = ["waitingList", "prepareList", "inTransitList", "paidList", "cancelList"]; // match client
 
 Object.keys(STATUS_ORDER).forEach(key => {
     const method = STATUS_ORDER[key];
@@ -43,6 +43,7 @@ const sortObject = (obj) => {
 }
 
 module.exports = {
+    ORDERS_KEY,
     STATUS_ORDER,
     checkStatusOrder,
     sortObject
