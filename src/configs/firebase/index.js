@@ -5,17 +5,19 @@ const { getStorage, getDownloadURL } = require('firebase-admin/storage');
 
 const PROJECT_ID = process.env.project_id;
 const PRIVATE_KEY_ID = process.env.private_key_id;
-const PRIVATE_KEY = process.env.private_key.replace(/\\n/g, '\n');
+const PRIVATE_KEY = process.env.private_key;
 const CLIENT_EMAIL = process.env.client_email;
 const CLIENT_ID = process.env.client_id;
 const CLIENT_x509_CERT_URL = process.env.client_x509_cert_url;
+
+const key = Buffer.from(PRIVATE_KEY , 'base64').toString('ascii');
 
 
 const serviceAccountKey = {
     "type": "service_account",
     "project_id": PROJECT_ID,
     "private_key_id": PRIVATE_KEY_ID,
-    "private_key": PRIVATE_KEY,
+    "private_key": key,
     "client_email": CLIENT_EMAIL,
     "client_id": CLIENT_ID,
     "auth_uri": "https://accounts.google.com/o/oauth2/auth",
