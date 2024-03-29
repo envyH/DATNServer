@@ -5,7 +5,7 @@ const { getStorage, getDownloadURL } = require('firebase-admin/storage');
 
 const PROJECT_ID = process.env.project_id;
 const PRIVATE_KEY_ID = process.env.private_key_id;
-const PRIVATE_KEY = process.env.private_key;
+const PRIVATE_KEY = process.env.private_key.replace(/\\n/g, '\n');
 const CLIENT_EMAIL = process.env.client_email;
 const CLIENT_ID = process.env.client_id;
 const CLIENT_x509_CERT_URL = process.env.client_x509_cert_url;
