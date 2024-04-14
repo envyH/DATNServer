@@ -44,6 +44,20 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "/src/public")));
 // app.use(session(sessionConfig));
 
+io.on("connection", (socket) => {
+    console.log(`connect ${socket.id}`);
+
+    socket.on("disconnect", (reason) => {
+        console.log(`disconnect ${socket.id} due to ${reason}`);
+    });
+
+    // New message
+    socket.on('on-chat', data => {
+        
+    });
+    
+});
+
 
 process.on('warning', (warning) => {
     console.log(warning.stack);

@@ -1,7 +1,7 @@
 extends layout
 
 block content
-    link(rel='stylesheet', href='/css/table.css')
+    //- link(rel='stylesheet', href='/css/table.css')
     #main-wrapper.page-wrapper(data-layout='vertical' data-navbarbg='skin6' data-sidebartype='full' data-sidebar-position='fixed' data-header-position='fixed')
         // Sidebar Start
         aside.left-sidebar
@@ -114,25 +114,26 @@ block content
                                             p.mb-0.fs-3 My Task
                                         a#logout.btn.btn-outline-primary.mx-3.mt-2.d-block(href='/login') Logout
             // Header End
-        
-            // Content file
-            case layout
-                when "dashboard"
-                    include dashboard.pug
-                    break
-                when "category"
-                    include category.pug
-                    break
-                when "customer"
-                    include customer.pug
-                    break
-                when "banner"
-                    include banner.pug
-                    break
-                
-            // Copyright
-            .py-6.px-6.text-center
-                p.mb-0.fs-4
-                    | Design and Developed by&nbsp;
-                    a.pe-1.text-primary.text-decoration-underline(href='' target='_blank') STECH
-        
+
+            .container-fluid
+                .row
+                    //- Item Category
+                    
+        //- Start Pagination
+        nav(aria-label='Page navigation example')
+            ul.pagination.justify-content-end
+                li.page-item.disabled
+                    a.page-link(href='#' tabindex='-1') Previous
+                li.page-item.active
+                    a.page-link(href='#') 1
+                li.page-item
+                    a.page-link(href='#') 2
+                li.page-item
+                    a.page-link(href='#') 3
+                li.page-item
+                    a.page-link(href='#') Next
+        //- End Pagination
+                            
+    script(src='/libs/socket.io.js')
+    script(src='/js/chat.js')
+    script(src='/js/message.js')
