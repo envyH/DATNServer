@@ -15,6 +15,7 @@ const phoneNumberRegex = /^(?:\+84|0)[1-9]\d{8}$/;
 const FirebaseService = require('./firebase');
 const OTPService = require('./otp');
 
+const { STATUS_CUSTOMER } = require('../utils/customer');
 const { AuthTokenModel, CustomerModel, MessageResponseModel } = require('../models');
 const MessageResponses = require('../models/model.message.response');
 
@@ -200,13 +201,12 @@ class CustomerService {
         } catch (e) {
             console.log("===========register==========");
             console.log(e.message);
-            console.log(e.code);
-            messageResponseError.setCode(`auth/${e.code}`);
+            messageResponseError.setCode(`auth/register-failed`);
             messageResponseError.setContent(e.message.toString());
             return res.send({
                 message: messageResponseError.toJSON(),
                 statusCode: 400,
-                code: `auth/${e.code}`,
+                code: `auth/register-failed`,
                 timestamp
             });
         }
@@ -227,10 +227,11 @@ class CustomerService {
         try {
             let cus = await CustomerModel.customerModel.findById(key);
             if (cus) {
-                if (cus.status === "Not verified") {
-                    cus.status = "Has been activated";
+                if (cus.status === STATUS_CUSTOMER.NOT_VERIFIED.value) {
+                    cus.status = STATUS_CUSTOMER.ACTIVATED.value;
+                    cus.otp = "000000";
                     await cus.save();
-                    await CustomerModel.customerModel.deleteMany({ phone_number: cus.phone_number, status: "Not verified" });
+                    await CustomerModel.customerModel.deleteMany({ phone_number: cus.phone_number, status: STATUS_CUSTOMER.NOT_VERIFIED.value });
                 }
             } else {
                 messageResponse.setStatusCode(400);
@@ -299,7 +300,8 @@ class CustomerService {
             if (!cusEmail && !cusPhone) {
                 messageResponse.setStatusCode(400);
                 messageResponse.setCode("auth/account-notexist");
-                messageResponse.setContent("Login failed: Account does not exist.");
+                messageResponse.setTitle("Login failed");
+                messageResponse.setContent("Account does not exist.");
                 return res.send({
                     message: messageResponse.toJSON(),
                     statusCode: 400,
@@ -531,7 +533,7 @@ class CustomerService {
             else {
                 messageResponse.setStatusCode(400);
                 messageResponse.setCode(`auth/account-notexists`);
-                messageResponse.setContent("Not exists");
+                messageResponse.setContent("Account not exists.");
                 return res.send({
                     message: messageResponse.toJSON(),
                     statusCode: 400,
