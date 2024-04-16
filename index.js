@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require("express");
-const RedisStore = require("connect-redis").default;
-const { createClient } = require('redis');
+// const RedisStore = require("connect-redis").default;
+// const { createClient } = require('redis');
 const app = express();
 const path = require("path");
 const createError = require("http-errors");
@@ -12,9 +12,6 @@ const bodyParser = require('body-parser');
 const cookieParser = require("cookie-parser");
 const session = require('express-session');
 const cors = require('cors');
-
-// init Firebase admin
-require('./src/configs/firebase/index');
 
 // view engine setup
 app.set("views", path.join(__dirname, "/src/views"));
@@ -53,19 +50,14 @@ app.use(express.static(path.join(__dirname, "/src/public")));
 //     }),
 // );
 
-app.use(function (req, res, next) {
-    if (!req.session) {
-        return next(new Error('Oh no'))
-    }
-    next()
-});
-
 process.on('warning', (warning) => {
     console.log(warning.stack);
 });
 
 // init DB
-require('./src/configs/mongoose/config');
+require('./src/configs/mongoose');
+// init Firebase admin
+require('./src/configs/firebase/');
 // init route
 app.use('/', require('./src/router/_index'));
 app.use('/v1/api/', require('./src/router/api'));
