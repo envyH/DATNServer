@@ -30,7 +30,7 @@ class OverlayMessageService {
             messageResponse.setContent("Missing customerID");
             return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "overlay/missing-customerid", timestamp });
         }
-
+        
         try {
             const filter = {
                 customer_id: customerID,

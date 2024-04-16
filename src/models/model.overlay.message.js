@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 
 const overlayMessageSchema = mongoose.Schema(
     {
-        customer_id: { type: mongoose.Schema.Types.ObjectId, ref: "customers", required: true, },
+        customer_id: [
+            { type: mongoose.Schema.Types.ObjectId, ref: "customers", required: true, }
+        ],
         status: { type: Number, required: true },
         notification: { type: String, required: true },
         colors_gradient: [{

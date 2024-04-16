@@ -36,38 +36,42 @@ class CustomerService {
         let portLocal = process.env.PORT;
 
 
-        let messageResponseError = new MessageResponses();
+        let messageResponse = new MessageResponses();
         const id = uuidv4();
-        messageResponseError.setId(id);
-        messageResponseError.setStatusCode(400);
-        messageResponseError.setCreatedAt(timestamp);
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
 
         if (email === undefined || email.toString().trim().length == 0) {
-            messageResponseError.setCode("auth/missing-email");
-            messageResponseError.setContent("missing email");
-            return res.send({ message: messageResponseError.toJSON(), statusCode: 400, code: "auth/missing-email", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/missing-email");
+            messageResponse.setContent("missing email");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "auth/missing-email", timestamp });
         }
         if (password === undefined || password.toString().trim().length == 0) {
-            messageResponseError.setCode("auth/missing-password");
-            messageResponseError.setContent("missing password");
-            return res.send({ message: messageResponseError.toJSON(), statusCode: 400, code: "auth/missing-password", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/missing-password");
+            messageResponse.setContent("missing password");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "auth/missing-password", timestamp });
         }
         if (fullName === undefined || fullName.toString().trim().length == 0) {
-            messageResponseError.setCode("auth/missing-fullname");
-            messageResponseError.setContent("missing full-name");
-            return res.send({ message: messageResponseError.toJSON(), statusCode: 400, code: "auth/missing-fullname", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/missing-fullname");
+            messageResponse.setContent("missing full-name");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "auth/missing-fullname", timestamp });
         }
         if (phoneNumber === undefined || phoneNumber.toString().trim().length == 0) {
-            messageResponseError.setCode("auth/missing-phonenumber");
-            messageResponseError.setContent("missing phone-number");
-            return res.send({ message: messageResponseError.toJSON(), statusCode: 400, code: "auth/missing-phonenumber", timestamp });
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/missing-phonenumber");
+            messageResponse.setContent("missing phone-number");
+            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "auth/missing-phonenumber", timestamp });
         }
 
         if (!phoneNumberRegex.test(phoneNumber)) {
-            messageResponseError.setCode("auth/non-valid-phonenumber");
-            messageResponseError.setContent("The phone number is not in the correct format");
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/non-valid-phonenumber");
+            messageResponse.setContent("The phone number is not in the correct format");
             return res.send({
-                message: messageResponseError.toJSON(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "auth/non-valid-phonenumber",
                 timestamp
@@ -75,10 +79,11 @@ class CustomerService {
         }
 
         if (!passwordRegex.test(password)) {
-            messageResponseError.setCode("auth/non-valid-password");
-            messageResponseError.setContent("Minimum password 8 characters, at least 1 capital letter, 1 number and 1 special character");
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("auth/non-valid-password");
+            messageResponse.setContent("Minimum password 8 characters, at least 1 capital letter, 1 number and 1 special character");
             return res.send({
-                message: messageResponseError.toJSON(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: "auth/non-valid-password",
                 timestamp
@@ -90,73 +95,54 @@ class CustomerService {
             let cusByPhone = await CustomerModel.customerModel.findOne({ phone_number: phoneNumber, }).lean();
             let cusByEmail = await CustomerModel.customerModel.findOne({ email: email }).lean();
             if (cusByPhone) {
-                messageResponseError.setCode("auth/phone-exists");
-                messageResponseError.setContent("This phone number is registered to another account");
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("auth/phone-exists");
+                messageResponse.setContent("This phone number is registered to another account");
                 return res.send({
-                    message: messageResponseError.toJSON(),
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "auth/phone-exists",
                     timestamp
                 });
             }
             if (cusByEmail) {
-                if (cusByEmail.status === "Not verified") {
+                if (cusByEmail.status === STATUS_CUSTOMER.NOT_VERIFIED.value) {
                     // const link = `http://${ipAddressLocal}:${portLocal}/v1/api/customer/verify?type=${"register"}&key=${cusByEmail._id.toString()}`;
                     const link = `${URL}/v1/api/customer/verify?type=${"register"}&key=${cusByEmail._id.toString()}`;
                     const text = `STECH xin chào bạn\nẤn vào đây để xác thực tài khoản: ${link}`;
                     let index = OTPService.sendEmailVerifyCus(email, text);
                     if (index === 0) {
-                        messageResponseError.setCode("auth/unsend-mail");
-                        messageResponseError.setContent("Send verify account fail");
+                        messageResponse.setStatusCode(400);
+                        messageResponse.setCode("auth/unsend-mail");
+                        messageResponse.setContent("Send verify account fail");
                         return res.send({
-                            message: messageResponseError.toJSON(),
+                            message: messageResponse.toJSON(),
                             statusCode: 400,
                             code: "auth/unsend-mail",
                             timestamp
                         });
                     }
-                    messageResponseError.setCode("auth/account-exists");
-                    messageResponseError.setContent("Account has been registered\nPlease verify your account in email!");
+                    messageResponse.setStatusCode(400);
+                    messageResponse.setCode("auth/account-exists");
+                    messageResponse.setContent("Account has been registered\nPlease verify your account in email!");
                     return res.send({
-                        message: messageResponseError.toJSON(),
+                        message: messageResponse.toJSON(),
                         statusCode: 400,
                         code: "auth/account-exists",
                         timestamp
                     })
                 }
-                messageResponseError.setCode("auth/email-exists");
-                messageResponseError.setContent("This email is registered to another account");
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("auth/email-exists");
+                messageResponse.setContent("This email is registered to another account");
                 return res.send({
-                    message: messageResponseError.toJSON(),
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "auth/email-exists",
                     timestamp
                 });
             }
-            // if (cusByPhone) {
-            //     const link = `http://${ipAddressLocal}:${portLocal}/v1/api/customer/verify?type=${"register"}&key=${cusByPhone._id.toString()}`;
-            //     const text = `STECH xin chào bạn\nẤn vào đây để xác thực tài khoản: ${link}`;
-            //     let index = sendEmailVerifyCus(email, text);
-            //     if (index === 0) {
-            //         return res.send({
-            //             message: "send verify account fail",
-            //             statusCode: 400,
-            //             code: "auth/unsend-mail"
-            //         });
-            //     }
-            //     if (cusByPhone.status === "Not verified") {
-            //         return res.send({
-            //             message: "Account has been registered\nPlease verify your account in email!",
-            //             statusCode: 400,
-            //             code: "auth/account-exists"
-            //         })
-            //     }
-            //     return res.send({
-            //         message: "phone number already exists",
-            //         statusCode: 400,
-            //         code: "auth/phone-exists"
-            //     });
-            // }
+
             // TODO create customer
             const passwordHash = await bcrypt.hash(password, 10);
             let cus = new CustomerModel.customerModel({
@@ -172,21 +158,18 @@ class CustomerService {
             const text = `STECH xin chào bạn\nẤn vào đây để xác thực tài khoản: ${link}`;
             let index = OTPService.sendEmailVerifyCus(email, text);
             if (index === 0) {
-                messageResponseError.setCode("auth/unsend-mail");
-                messageResponseError.setContent("Send verify account fail.");
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("auth/unsend-mail");
+                messageResponse.setContent("Send verify account fail.");
                 return res.send({
-                    message: messageResponseError.toJSON(),
+                    message: messageResponse.toJSON(),
                     statusCode: 400,
                     code: "auth/unsend-mail",
                     timestamp
                 });
-            } else {
-                await cus.save();
             }
+            await cus.save();
             cus.password = password;
-            let messageResponse = new MessageResponses();
-            let id = uuidv4();
-            messageResponse.setId(id);
             messageResponse.setStatusCode(200);
             messageResponse.setCode("auth/verify");
             messageResponse.setContent("Register success!\nPlease verify your account in email.");
@@ -198,13 +181,14 @@ class CustomerService {
                 code: "auth/verify",
                 timestamp
             });
+
         } catch (e) {
             console.log("===========register==========");
             console.log(e.message);
-            messageResponseError.setCode(`auth/register-failed`);
-            messageResponseError.setContent(e.message.toString());
+            messageResponse.setCode(`auth/register-failed`);
+            messageResponse.setContent(e.message.toString());
             return res.send({
-                message: messageResponseError.toJSON(),
+                message: messageResponse.toJSON(),
                 statusCode: 400,
                 code: `auth/register-failed`,
                 timestamp
@@ -323,7 +307,7 @@ class CustomerService {
                         timestamp
                     });
                 }
-                if (cusPhone.status !== "Has been activated") {
+                if (cusPhone.status !== STATUS_CUSTOMER.ACTIVATED.value) {
                     messageResponse.setStatusCode(400);
                     messageResponse.setCode("auth/no-verify");
                     messageResponse.setContent("Your account has not been activated or has been locked, please contact hotline 0999999999 for help.");
@@ -404,7 +388,7 @@ class CustomerService {
                         timestamp
                     });
                 }
-                if (cusEmail.status !== "Has been activated") {
+                if (cusEmail.status !== STATUS_CUSTOMER.ACTIVATED.value) {
                     messageResponse.setStatusCode(400);
                     messageResponse.setCode(`auth/no-verify`);
                     messageResponse.setContent("Your account has not been activated or has been locked, please contact Email: datnstech@gmail.com for help.");

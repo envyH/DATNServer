@@ -15,7 +15,7 @@ class CategoryController {
         try {
             let listCategory = await CategoryModel.categoryModel.find().lean();
             return res.render('category', {
-                terifyWith: "Admin",
+                verifyWith: "Admin",
                 layout: "category",
                 category: listCategory
             });
@@ -34,12 +34,12 @@ class CategoryController {
             if (!req.file) {
                 return res.status(400).send('Error: not receiving file');
             }
-            const fileimg = req.file;
+            const fileImg = req.file;
 
             if (name == null || name.toString().trim().length === 0) {
                 return res.send({ message: "name category require", code: 0 });
             }
-            if (fileimg == null) {
+            if (fileImg == null) {
                 return res.send({ message: "image category require", code: 0 });
             }
 
@@ -47,12 +47,12 @@ class CategoryController {
                 name,
                 created_at: timestamp,
             });
-            // console.log(fileimg);
+
             let img = await FirebaseService.uploadImage(
                 category._id.toString(),
                 "",
                 "categories",
-                fileimg
+                fileImg
             );
             if (img === 0) {
                 return res.send({ message: "Failed to upload image category", code: 0 });

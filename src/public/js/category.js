@@ -93,7 +93,7 @@ function deleteCategory(categoryID, message) {
             switch (myData.code) {
                 case "CATEGORY_USED":
                     let text = "Thể loại này đang được sử dụng.\nBạn có chắc chắn muốn xoá";
-                    if (confirm(text) == true) {
+                    if (confirm(text) === true) {
                         // delete
                         text = "Vẫn xoá"
                         deleteCategory(categoryID, myData.message);

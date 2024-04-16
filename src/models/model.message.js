@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const { STATUS_MESSAGE } = require('../utils/message');
+const { STATUS_MESSAGE, TYPE_MESSAGE } = require('../utils/message');
 const messageSchema = mongoose.Schema(
     {
         conversation_id: {
@@ -8,12 +8,12 @@ const messageSchema = mongoose.Schema(
             ref: "conversations",
             required: true
         },
-        sennder_id: {
+        sender_id: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "users",
             required: true
         },
-        message_type: { type: Number, required: true },
+        message_type: { type: Number, required: true, default: TYPE_MESSAGE.TEXT.value },
         message: { type: String, required: true },
         status: { type: Number, required: true, default: STATUS_MESSAGE.SENDING.value },
         created_at: { type: String, required: true },

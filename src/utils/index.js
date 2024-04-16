@@ -7,7 +7,7 @@ const isNumber = (x) => {
     if (typeof x === 'number') {
         return x === Math.floor(x);
     } else if (typeof x === 'string') {
-        return parseInt(x, 10) == x && !isNaN(parseInt(x, 10));
+        return parseInt(x, 10) === x && !isNaN(parseInt(x, 10));
     } else {
         return false;
     }

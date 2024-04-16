@@ -3,7 +3,7 @@ const router = express.Router();
 
 const multer = require('multer');
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({storage: storage});
 
 
 const CategoryController = require('../controllers/category');
@@ -11,10 +11,10 @@ const ChatController = require('../controllers/chat');
 const CustomerController = require('../controllers/customer');
 const HomeController = require('../controllers/home');
 const BannerController = require('../controllers/banner');
-const OrderController = require('../controllers/order');
+// const OrderController = require('../controllers/order');
 
 
-router.get('/', (req, res, next) => {
+router.get('/', (req, res) => {
     const strCompress = "Hello world";
     return res.status(200).json({
         message: "Have a nice day!",

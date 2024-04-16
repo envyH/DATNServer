@@ -14,7 +14,7 @@ exports.checkPermission = (req, res, next) => {
     const token = req.header('Authorization');
 
     let messageResponse = new MessageResponses();
-    const id = uuidv4();
+    const id = uuidv4(undefined, undefined, undefined);
     messageResponse.setId(id);
     messageResponse.setStatusCode(400);
     messageResponse.setCreatedAt(timestamp);

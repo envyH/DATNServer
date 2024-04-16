@@ -4,21 +4,15 @@ const app = express();
 const path = require("path");
 const createError = require("http-errors");
 const compression = require('compression');
-const { default: helmet } = require('helmet');
+const {default: helmet} = require('helmet');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const cookieParser = require("cookie-parser");
 const session = require('express-session');
 const cors = require('cors');
-const http = require('http');
-const server = http.createServer(app);
-const { Server } = require('socket.io');
-const io = new Server(server, {
-    // Socket.IO options
-});
 
 // init Firebase admin
-const { admin } = require('./src/configs/firebase/index');
+require('./src/configs/firebase/index');
 
 const sessionConfig = require('./src/configs/session.config');
 
@@ -29,34 +23,17 @@ app.set("view engine", "pug");
 app.use(cors());
 app.use(morgan("dev"));
 app.use(helmet({
-    contentSecurityPolicy: false,
-    xDownloadOptions: false,
-}),
+        contentSecurityPolicy: false,
+        xDownloadOptions: false,
+    }),
 );
 app.use(compression());
-
-
-
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "/src/public")));
-// app.use(session(sessionConfig));
-
-io.on("connection", (socket) => {
-    console.log(`connect ${socket.id}`);
-
-    socket.on("disconnect", (reason) => {
-        console.log(`disconnect ${socket.id} due to ${reason}`);
-    });
-
-    // New message
-    socket.on('on-chat', data => {
-        
-    });
-    
-});
+app.use(session(sessionConfig));
 
 
 process.on('warning', (warning) => {
@@ -64,11 +41,16 @@ process.on('warning', (warning) => {
 });
 
 // init DB
-const db = require('./src/configs/mongoose/config');
-
+require('./src/configs/mongoose/config');
 // init route
 app.use('/', require('./src/router/_index'));
 app.use('/v1/api/', require('./src/router/api'));
+
+
+const http = require('http');
+const server = http.createServer(app);
+const {initializeSocket} = require('./src/services/socket.message');
+initializeSocket(server);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -94,9 +76,8 @@ app.use((error, req, res, next) => {
 
 
 const post = process.env.PORT || 3000;
-server.listen(post, (req, res) => {
-    console.log("connect to port " + post);
+server.listen(post, () => {
+    console.log("Server started at PORT: " + post);
 });
+
 module.exports = server;
-
-

@@ -3,14 +3,15 @@ const { v4: uuidv4 } = require('uuid');
 // const fs = require('fs');
 
 const { admin } = require('../configs/firebase/index');
+const {existsSync, mkdirSync} = require("node:fs");
 // Cloud  storage
 const bucket = admin.storage().bucket(process.env.BUCKET);
 
 class FirebaseService {
     createFoldersIfNotExist = async (...folders) => {
         for (const folder of folders) {
-            if (!fs.existsSync(folder)) {
-                fs.mkdirSync(folder, { recursive: true });
+            if (!existsSync(folder)) {
+                mkdirSync(folder, { recursive: true });
             }
         }
     }
@@ -46,7 +47,7 @@ class FirebaseService {
                     metadata: { contentType: fileItem.mimetype },
                 });
 
-                const token = uuidv4();
+                const token = uuidv4(undefined, undefined, undefined);
                 const encodedPath = encodeURIComponent(destinationPath);
                 const fileUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${token}`;
 

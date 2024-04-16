@@ -1,17 +1,16 @@
-const CustomerModel = require('../models/model.customer');
-
+const {} = require('../models/');
 
 class ChatController {
     show = async (req, res) => {
         try {
             return res.render('chat', {
-                terifyWith: "Admin",
+                verifyWith: "Admin",
                 layout: "chat",
                 code: 1
             });
         } catch (e) {
             console.log("ChatController: ", e.message);
-            return res.send({ message: "Error getting data chat", code: 0 });
+            return res.send({message: "Error getting data chat", code: 0});
         }
 
     }
@@ -22,6 +21,7 @@ class ChatController {
     update = (req, res, next) => {
 
     }
+
     destroy(req, res, next) {
 
     }

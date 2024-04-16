@@ -1,23 +1,23 @@
 doctype html
 html(lang='en')
-  head
-    meta(charset='utf-8')
-    meta(name='viewport', content='width=device-width, initial-scale=1')
-    title Stech 404 error page
-    link(rel='shortcut icon' type='image/png' href='/images/logo.jpeg')
-    link(href='https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css', rel='stylesheet')
-    link(href='/css/error.css', rel='stylesheet')
-  body
-    .container.bootstrap.snippets.bootdey
-      .row
-        .col-md-12
-          .pull-right(style='margin-top:10px;')
-            .col-md-10.col-md-offset-1.pull-right
-              img.img-error(src='/images/404.jpg')
-              .error-actions
-                h2= message
-                  h3= error.status
-                  pre #{error.stack}
-                a.btn.btn-primary.btn-lg(href='/home')
-                  span.glyphicon.glyphicon-arrow-left
-                  |    Back Home
+    head
+        meta(charset='utf-8')
+        meta(name='viewport', content='width=device-width, initial-scale=1')
+        title Stech 404 error page
+        link(rel='shortcut icon' type='image/png' href='/images/logo.jpeg')
+        link(rel='stylesheet' href='/css/error.css')
+        link(rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css")
+    body
+        .container.bootstrap.snippets.bootdey
+            .row
+                .col-md-12
+                    .pull-right(style='margin-top:10px;')
+                        .col-md-10.col-md-offset-1.pull-right
+                            img.img-error(src='/images/404.jpg')
+                            .error-actions
+                                h2= message
+                                    h3= error.status
+                                    pre #{error.stack}
+                                a.btn.btn-primary.btn-lg(href='/home')
+                                    span.glyphicon.glyphicon-arrow-left
+                                    |    Back Home
