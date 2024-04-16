@@ -1,5 +1,7 @@
 require('dotenv').config();
 const express = require("express");
+const RedisStore = require("connect-redis").default;
+const { createClient } = require('redis');
 const app = express();
 const path = require("path");
 const createError = require("http-errors");
@@ -14,8 +16,6 @@ const cors = require('cors');
 // init Firebase admin
 require('./src/configs/firebase/index');
 
-
-app.set('trust proxy', 1);
 // view engine setup
 app.set("views", path.join(__dirname, "/src/views"));
 app.set("view engine", "pug");
@@ -33,23 +33,32 @@ app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "/src/public")));
-app.use(session({
-    cookie: {
-        secure: true,
-        maxAge: 60000
-    },
-    store: new RedisStore(),
-    secret: 'secret',
-    saveUninitialized: true,
-    resave: false
-}));
+
+// Initialize client.
+// let redisClient = createClient()
+// redisClient.connect().catch(console.error)
+
+// Initialize store.
+// let redisStore = new RedisStore({
+//     client: redisClient,
+//     prefix: "myapp:",
+// });
+// Initialize session storage.
+// app.use(
+//     session({
+//         store: redisStore,
+//         resave: false, // required: force lightweight session keep alive (touch)
+//         saveUninitialized: false, // recommended: only save session when data exists
+//         secret: "keyboard cat",
+//     }),
+// );
+
 app.use(function (req, res, next) {
     if (!req.session) {
         return next(new Error('Oh no'))
     }
-    next() 
+    next()
 });
-
 
 process.on('warning', (warning) => {
     console.log(warning.stack);
