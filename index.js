@@ -4,7 +4,7 @@ const app = express();
 const path = require("path");
 const createError = require("http-errors");
 const compression = require('compression');
-const {default: helmet} = require('helmet');
+const { default: helmet } = require('helmet');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const cookieParser = require("cookie-parser");
@@ -14,8 +14,8 @@ const cors = require('cors');
 // init Firebase admin
 require('./src/configs/firebase/index');
 
-const sessionConfig = require('./src/configs/session.config');
 
+app.set('trust proxy', 1);
 // view engine setup
 app.set("views", path.join(__dirname, "/src/views"));
 app.set("view engine", "pug");
@@ -23,17 +23,32 @@ app.set("view engine", "pug");
 app.use(cors());
 app.use(morgan("dev"));
 app.use(helmet({
-        contentSecurityPolicy: false,
-        xDownloadOptions: false,
-    }),
+    contentSecurityPolicy: false,
+    xDownloadOptions: false,
+}),
 );
 app.use(compression());
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "/src/public")));
-app.use(session(sessionConfig));
+app.use(session({
+    cookie: {
+        secure: true,
+        maxAge: 60000
+    },
+    store: new RedisStore(),
+    secret: 'secret',
+    saveUninitialized: true,
+    resave: false
+}));
+app.use(function (req, res, next) {
+    if (!req.session) {
+        return next(new Error('Oh no'))
+    }
+    next() 
+});
 
 
 process.on('warning', (warning) => {
@@ -49,7 +64,7 @@ app.use('/v1/api/', require('./src/router/api'));
 
 const http = require('http');
 const server = http.createServer(app);
-const {initializeSocket} = require('./src/services/socket.message');
+const { initializeSocket } = require('./src/services/socket.message');
 initializeSocket(server);
 
 // catch 404 and forward to error handler
