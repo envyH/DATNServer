@@ -10,6 +10,7 @@ const OrderDetailModel = require('./model.orderdetail');
 const ProductModel = require('./model.product');
 const OverlayMessagesModel = require('./model.overlay.message');
 const ConversationModel = require('./model.conversation');
+const MessageModel = require('./model.message');
 
 
 module.exports = {
@@ -25,6 +26,7 @@ module.exports = {
     ProductModel,
     OverlayMessagesModel,
     ConversationModel,
+    MessageModel,
 
 
 }

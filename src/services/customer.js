@@ -16,7 +16,7 @@ const FirebaseService = require('./firebase');
 const OTPService = require('./otp');
 
 const { STATUS_CUSTOMER } = require('../utils/customer');
-const { AuthTokenModel, CustomerModel, MessageResponseModel } = require('../models');
+const { AuthTokenModel, UserModel, CustomerModel, MessageResponseModel } = require('../models');
 const MessageResponses = require('../models/model.message.response');
 
 const { formatPhoneNumber } = require('../helpers/index');
@@ -230,7 +230,17 @@ class CustomerService {
             }
             messageResponse.setStatusCode(200);
             messageResponse.setCode("auth/activated");
-            messageResponse.setContent("Has been activated.");
+            const otp = Math.floor(100000 + Math.random() * 900000);
+            messageResponse.setContent(`Has been activated. Your OTP is ${otp}`);
+            let user = new UserModel.userModel({
+                user_id: cus._id,
+                email: cus.email,
+                avatar: cus.avatar,
+                full_name: cus.full_name,
+                phone_number: cus.phone_number,
+                created_at: cus.created_at
+            });
+            await user.save();
             return res.send({
                 message: messageResponse.toJSON(),
                 statusCode: 200,
@@ -539,8 +549,9 @@ class CustomerService {
         }
     }
 
+    // TODO verifyLogin
     verifyLogin = async (req, res) => {
-        const customerID = req.body._id;
+        const customerID = req.body.user_id;
         const password = req.body.password;
         const otp = req.body.otp;
         let date = new Date();
@@ -641,7 +652,7 @@ class CustomerService {
     }
 
     addFCM = async (req, res) => {
-        let customerID = req.body._id;
+        let customerID = req.body.user_id;
         let fcm = req.body.fcm;
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);

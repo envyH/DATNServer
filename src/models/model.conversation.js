@@ -8,7 +8,13 @@ const conversationSchema = mongoose.Schema(
             ref: "users",
             required: true
         },
-        channel_id: { type: String, required: true },
+        member_id: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "users",
+                required: true
+            },
+        ],
         created_at: { type: String, required: true },
         updated_at: { type: String, required: false },
         deleted_at: { type: String, required: false },

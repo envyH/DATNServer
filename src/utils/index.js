@@ -3,7 +3,7 @@ const isNumeric = (str) => {
     return !isNaN(str) && !isNaN(parseFloat(str))
 }
 
-const isNumber = (x) => {
+const isNumber2 = (x) => {
     if (typeof x === 'number') {
         return x === Math.floor(x);
     } else if (typeof x === 'string') {
@@ -11,6 +11,10 @@ const isNumber = (x) => {
     } else {
         return false;
     }
+}
+
+const isNumber = (str) => {
+    return Number.isInteger(parseInt(str)) && !isNaN(parseInt(str));
 }
 
 module.exports = {
