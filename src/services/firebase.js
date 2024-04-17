@@ -1,34 +1,12 @@
 require('dotenv').config();
 const { v4: uuidv4 } = require('uuid');
-// const fs = require('fs');
 
 const { admin } = require('../configs/firebase/index');
-const {existsSync, mkdirSync} = require("node:fs");
+
 // Cloud  storage
 const bucket = admin.storage().bucket(process.env.BUCKET);
 
 class FirebaseService {
-    createFoldersIfNotExist = async (...folders) => {
-        for (const folder of folders) {
-            if (!existsSync(folder)) {
-                mkdirSync(folder, { recursive: true });
-            }
-        }
-    }
-
-    deleteFolderAndFiles = async (res, folderPath) => {
-        try {
-            const files = await bucket.getFiles({ prefix: folderPath });
-            for (const file of files[0]) {
-                await file.delete();
-            }
-            console.log(`Folder ${folderPath} deleted successfully from Firebase Storage`);
-        } catch (error) {
-            console.error(`Error deleting folder from Firebase Storage: ${error.message}`);
-            return res.send({ message: "Error deleting folder", code: 0 });
-        }
-    }
-
     uploadImage = async (id, fileType, folder, fileItem) => {
         return new Promise(async (resolve, reject) => {
             try {

@@ -41,7 +41,7 @@ const getLatestMessage = async (conversationID, memberID) => {
     }
     const options = {
         sort: { created_at: -1 }, // Sắp xếp theo created_at giảm dần để lấy tin nhắn mới nhất đầu tiên
-        limit: 1 // Giới hạn kết quả trả về chỉ là 1 tin nhắn
+        limit: 1
     };
     try {
         let dataMessageLatest = await MessageModel.messageModel.findOne(filter, null, options).lean();
@@ -242,7 +242,6 @@ class ConversationService {
                     let status;
                     if (dataLatestMsg != null) {
                         message = await decryptedMessage(dataLatestMsg.message);
-                        console.log(message);
                         senderID = dataLatestMsg.sender_id;
                         messageType = dataLatestMsg.message_type;
                         status = dataLatestMsg.status;
