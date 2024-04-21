@@ -8,7 +8,8 @@ const { checkPermission } = require('../middlewares/middleware');
 const MessageService = require('../services/message');
 
 
-router.post("/add-msg", checkPermission, MessageService.addMessage);
+router.post("/create", checkPermission, MessageService.addMessage);
+router.post("/get", checkPermission, MessageService.get);
 
 
 module.exports = router

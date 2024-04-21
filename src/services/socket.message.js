@@ -14,13 +14,16 @@ const initializeSocket = (server) => {
 
         // New message
         socket.on('on-chat', data => {
-            const { message } = JSON.parse(data);
-            console.log(message);
+            io.emit("user-chat", data)
+            console.log(data);
         });
         //
         socket.on('on-update-chat', data => {
             const { message, type } = JSON.parse(data);
             console.log(type);
+        });
+        socket.on('user-chat', data => {
+            console.log(data);
         });
 
     });

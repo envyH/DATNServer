@@ -8,13 +8,13 @@ const formatType = "YYYY-MM-DD-HH:mm:ss";
 const FirebaseService = require('../services/firebase');
 
 const { ConversationModel, MessageModel } = require('../models');
-const { encryptedMessage, checkTypeMessage, TYPE_MESSAGE } = require('../utils/message');
+const { encryptedMessage, checkTypeMessage, TYPE_MESSAGE, decryptedMessage } = require('../utils/message');
 const MessageResponses = require('../models/model.message.response');
 
-const checkUserInConversation = async (conversationID, senderID) => {
+const checkUserInConversation = async (conversationID, userID) => {
     const filter = {
         _id: conversationID,
-        member_id: { $in: [senderID] },
+        member_id: { $in: [userID] },
     }
     try {
         let conversation = await ConversationModel.conversationModel.findOne(filter).lean();
@@ -42,9 +42,18 @@ const saveMessage = async (res, messageResponse, message, conversationID, sender
         messageResponse.setStatusCode(200);
         messageResponse.setCode("message/create-success");
         messageResponse.setContent("Create message success!");
+        let decryptedMsg = await decryptedMessage(newMessage.message);
+        let newMessageResponse = {
+            conversation_id: newMessage.conversation_id,
+            sender_id: newMessage.sender_id,
+            message_type: newMessage.message_type,
+            message: decryptedMsg,
+            created_at: newMessage.created_at
+        }
         return res.send({
             message: messageResponse.toJSON(),
             statusCode: 200,
+            newMessage: newMessageResponse,
             code: "message/create-success",
             timestamp
         });
@@ -64,10 +73,10 @@ const saveMessage = async (res, messageResponse, message, conversationID, sender
 }
 class MessageService {
     addMessage = async (req, res) => {
-        const conversationID = req.body.conversation_id;
-        const senderID = req.body.sender_id;
+        const conversationID = req.body.conversationID;
+        const senderID = req.body.senderID;
         const message = req.body.message;
-        const messageType = req.body.message_type;
+        const messageType = req.body.messageType;
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
 
@@ -77,7 +86,8 @@ class MessageService {
         messageResponse.setCreatedAt(timestamp);
 
 
-        if (conversationID === undefined || conversationID.toString().trim().length === 0 || !mongoose.isValidObjectId(conversationID)) {
+        if (conversationID === undefined || conversationID.toString().trim().length === 0
+            || !mongoose.isValidObjectId(conversationID)) {
             messageResponse.setStatusCode(400);
             messageResponse.setCode("message/missing-conversation-id");
             messageResponse.setContent("Missing conversation_id");
@@ -89,7 +99,8 @@ class MessageService {
             });
         }
 
-        if (senderID === undefined || senderID.toString().trim().length === 0 || !mongoose.isValidObjectId(senderID)) {
+        if (senderID === undefined || senderID.toString().trim().length === 0
+            || !mongoose.isValidObjectId(senderID)) {
             messageResponse.setStatusCode(400);
             messageResponse.setCode("message/missing-sender-id");
             messageResponse.setContent("Missing sender_id");
@@ -101,7 +112,7 @@ class MessageService {
             });
         }
 
-        let isValidType = checkTypeMessage(messageType);
+        let isValidType = checkTypeMessage(parseInt(messageType));
         if (!isValidType) {
             messageResponse.setStatusCode(400);
             messageResponse.setCode("message/type-not-valid");
@@ -126,7 +137,7 @@ class MessageService {
                 timestamp
             });
         }
-        switch (messageType) {
+        switch (parseInt(messageType)) {
             case TYPE_MESSAGE.TEXT.value:
                 const encryptedMsg = await encryptedMessage(message);
                 await saveMessage(res, messageResponse, encryptedMsg, conversationID, senderID, TYPE_MESSAGE.TEXT.value, timestamp)
@@ -143,6 +154,106 @@ class MessageService {
             default:
                 return res.send("Updating....")
                 break;
+        }
+    }
+
+    get = async (req, res) => {
+        const conversationID = req.body.conversationID;
+        const userID = req.body.userID;
+
+        let date = new Date();
+        let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+        let messageResponse = new MessageResponses();
+        const id = uuidv4(undefined, undefined, undefined);
+        messageResponse.setId(id);
+        messageResponse.setCreatedAt(timestamp);
+
+
+        if (conversationID === undefined || conversationID.toString().trim().length === 0
+            || !mongoose.isValidObjectId(conversationID)) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("message/missing-conversation-id");
+            messageResponse.setContent("Missing conversation_id");
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 400,
+                code: "message/missing-conversation-id",
+                timestamp
+            });
+        }
+
+        if (userID === undefined || userID.toString().trim().length === 0
+            || !mongoose.isValidObjectId(userID)) {
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("message/missing-user-id");
+            messageResponse.setContent("Missing userID");
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 400,
+                code: "message/missing-user-id",
+                timestamp
+            });
+        }
+
+        try {
+            // check user in conversation
+            let flag = await checkUserInConversation(conversationID, userID);
+            if (!flag) {
+                messageResponse.setStatusCode(400);
+                messageResponse.setCode("message/user-not-in-conversation");
+                messageResponse.setContent("You do not have permission to get messages!");
+                return res.send({
+                    message: messageResponse.toJSON(),
+                    statusCode: 400,
+                    code: "message/user-not-in-conversation",
+                    timestamp
+                });
+            }
+            const filter = {
+                conversation_id: conversationID
+            }
+            let dataRawMessage = await MessageModel.messageModel.find(filter).lean();
+            let dataMessageResponse = [];
+            await Promise.all(
+                dataRawMessage.map(async (dataMsg) => {
+                    let msg = await decryptedMessage(dataMsg.message);
+                    // TODO optimize
+                    let dataMessage = {
+                        _id: dataMsg._id,
+                        conversation_id: dataMsg.conversation_id,
+                        sender_id: dataMsg.sender_id,
+                        message_type: dataMsg.message_type,
+                        message: msg,
+                        status: dataMsg.status,
+                        created_at: dataMsg.created_at
+                    }
+                    dataMessageResponse.push(dataMessage);
+                })
+            );
+
+            messageResponse.setStatusCode(200);
+            messageResponse.setCode("message/get-data-message-success");
+            messageResponse.setContent("Get data message success!");
+            return res.send({
+                message: messageResponse.toJSON(),
+                messages: dataMessageResponse,
+                statusCode: 200,
+                code: "message/get-data-message-success",
+                timestamp
+            });
+        } catch (e) {
+            console.log("========get=========");
+            console.log(e.message.toString());
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("message/get-data-message-failed");
+            messageResponse.setContent(e.message.toString());
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 400,
+                code: "message/get-data-message-failed",
+                timestamp
+            });
         }
     }
 

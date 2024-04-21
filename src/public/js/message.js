@@ -3,4 +3,12 @@ document.addEventListener("DOMContentLoaded", function () {
         // Socket.IO options
     });
 
+
+    socket.emit('on-chat', {
+        metadata: {
+            message: "ABC",
+            type: 1
+        }
+    });
+
 })
