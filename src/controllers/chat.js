@@ -3,9 +3,8 @@ const {} = require('../models/');
 class ChatController {
     show = async (req, res) => {
         try {
-            return res.render('chat', {
-                verifyWith: "Admin",
-                layout: "chat",
+            return res.render('conversation', {
+                layout: "conversation",
                 code: 1
             });
         } catch (e) {
