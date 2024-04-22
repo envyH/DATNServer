@@ -1,0 +1,46 @@
+extends layout
+
+block content
+    if typeLogin === undefined
+        #main-wrapper.page-wrapper(data-layout='vertical', data-navbarbg='skin6', data-sidebartype='full', data-sidebar-position='fixed', data-header-position='fixed')
+            .position-relative.overflow-hidden.radial-gradient.min-vh-100.d-flex.align-items-center.justify-content-center
+                .d-flex.align-items-center.justify-content-center.w-100
+                    .row.justify-content-center.w-100
+                        .col-md-8.col-lg-6.col-xxl-3
+                            .card.mb-0
+                                .card-body
+                                    a.text-nowrap.logo-img.text-center.d-block.py-3.w-100(href='/home')
+                                        img(src='/images/logo.jpeg' width='180' alt='')
+
+                                        a#withAdmin.btn.btn-danger.w-100.py-8.fs-4.mb-4.rounded-2 Admin
+                                        a#withEmployee.btn.btn-primary.w-100.py-8.fs-4.mb-4.rounded-2 Employee
+    else 
+        #main-wrapper.page-wrapper(data-layout='vertical', data-navbarbg='skin6', data-sidebartype='full', data-sidebar-position='fixed', data-header-position='fixed')
+            .position-relative.overflow-hidden.radial-gradient.min-vh-100.d-flex.align-items-center.justify-content-center
+                .d-flex.align-items-center.justify-content-center.w-100
+                    .row.justify-content-center.w-100
+                        .col-md-8.col-lg-6.col-xxl-3
+                            .card.mb-0
+                                a#btnBack.text-primary.fw-bold(href='/login') Back
+                                .card-body
+                                    a.text-nowrap.logo-img.text-center.d-block.py-3.w-100(href='/home')
+                                        img(src='/images/logo.jpeg' width='180' alt='')
+                                    p.text-center Login with #{typeLogin} account.
+                                    form
+                                        .mb-3
+                                            label.form-label(for='username') Username
+                                            input#username.form-control(name='username' type='email' required)
+                                        .mb-4
+                                            label.form-label(for='password') Password
+                                            input#password.form-control(name='password' type='password' required)
+                                        .d-flex.align-items-center.justify-content-between.mb-4
+                                            .form-check
+                                                input#isRemember.form-check-input.primary(type='checkbox' value='' checked='')
+                                                label.form-check-label.text-dark(for='isRemember') Remember me
+                                            a.text-primary.fw-bold(href='#') Forgot Password ?
+                                        button#loginButton.btn.btn-primary.w-100.py-8.fs-4.mb-4.rounded-2(type="submit") Login
+                                        //- .d-flex.align-items-center.justify-content-center
+                                        //-     p.fs-4.mb-0.fw-bold You don&apos;t have account?
+                                        //-     a.text-primary.fw-bold.ms-2(href='/register') Create an account
+    
+    script(src='/js/login.js')

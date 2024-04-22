@@ -11,6 +11,7 @@ const ChatController = require('../controllers/chat');
 const CustomerController = require('../controllers/customer');
 const HomeController = require('../controllers/home');
 const BannerController = require('../controllers/banner');
+const LoginController = require('../controllers/login');
 // const OrderController = require('../controllers/order');
 
 
@@ -29,5 +30,7 @@ router.get('/chat', ChatController.show);
 router.get('/customer', CustomerController.show);
 router.get('/banner', BannerController.show);
 router.get('/home', HomeController.show);
+router.get('/login', LoginController.show);
+router.post('/do-login', LoginController.login);
 
 module.exports = router;
