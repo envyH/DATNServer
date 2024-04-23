@@ -86,7 +86,7 @@ const doLogin = (username, password, type) => {
             case "auth/login-admin-success":
                 const { metadata } = myDataResponse;
                 const { avatar, email, full_name, phone_number } = metadata;
-                setCookie("dataUserLogged", JSON.stringify(metadata), 2);
+                setCookie("dataUserLogged", btoa(JSON.stringify(metadata)), 2);
                 window.location.assign("/home");
                 break;
 

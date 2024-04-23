@@ -25,7 +25,7 @@ const doLoginAdmin = async (res, username, password) => {
 
     }
     try {
-        let admin = await AdminModel.adminModel.findOne(filter).select('-_id').lean();
+        let admin = await AdminModel.adminModel.findOne(filter).select('-created_at -otp -fcm -status').lean();
         if (!admin) {
             return res.send({
                 message: "admin not found",
@@ -61,6 +61,51 @@ const doLoginAdmin = async (res, username, password) => {
         });
     }
 }
+
+const doLoginEmployee = async (res, username, password) => {
+    let date = new Date();
+    let timestamp = moment(date).tz(specificTimeZone).format(formatType);
+
+    const filter = {
+        email: username
+    }
+    try {
+        let employee = await EmployeeModel.employeeModel.findOne(filter).select('-created_at -otp -fcm -status').lean();
+        if (!employee) {
+            return res.send({
+                message: "employee not found",
+                code: "auth/employee-not-found",
+                statusCode: 400,
+                timestamp
+            });
+        }
+        const match = await bcrypt.compare(password, employee.password);
+        if (!match) {
+            return res.send({
+                message: "wrong password",
+                statusCode: 400,
+                code: "auth/wrong-password",
+                timestamp
+            });
+        }
+        return res.send({
+            message: "Login employee success",
+            statusCode: 200,
+            metadata: admin,
+            code: `auth/login-employee-success`,
+            timestamp
+        });
+    } catch (e) {
+        console.log("=========doLoginEmployee=========");
+        console.log(e.message.toString());
+        return res.send({
+            message: "Login employee failed",
+            statusCode: 400,
+            code: `auth/login-employee-failed`,
+            timestamp
+        });
+    }
+}
 class LoginController {
     show = async (req, res) => {
         const cookies = parseCookies(req);
@@ -76,17 +121,14 @@ class LoginController {
                 typeLogin = undefined;
                 break;
         }
-        console.log(typeLogin);
         try {
             return res.render('login', {
                 typeLogin: typeLogin,
-
             });
         } catch (e) {
             console.log("LoginController: ", e.message);
             return res.send({ message: "Error getting login screen", code: 0 });
         }
-
     }
 
     login = async (req, res, next) => {
@@ -99,12 +141,16 @@ class LoginController {
                 break;
 
             case TYPE_LOGIN.EMPLOYEE.value:
-                console.log("employee");
+                await doLoginEmployee(res, username, password);
                 break;
 
             default:
-                console.log("default");
-                break;
+                return res.send({
+                    message: `Login ${typeLogin} failed`,
+                    statusCode: 400,
+                    code: `auth/login-${typeLogin}-failed`,
+                    timestamp
+                });
         }
     }
 

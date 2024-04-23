@@ -144,7 +144,7 @@ block content
                                             .card-body.text-center
                                                 a(href='#!')
                                                     if userLoged.avatar
-                                                        img.rounded-circle.img-fluid.shadow.avatar-xxl(src=`${userLoged.avatar}`)
+                                                        img.rounded-circle.img-fluid.shadow.avatar-xxl(src=`${userLoged.avatar}` alt="img")
                                                     else 
                                                         img.rounded-circle.img-fluid.shadow.avatar-xxl(src='/images/avatar-default.jpg')
                                                 |
@@ -172,7 +172,7 @@ block content
                                         .d-flex
                                             .w-100.d-flex.pl-0.align-items-
                                                 if userLoged.avatar
-                                                    img.user-detail-trigger.rounded-circle.shadow.avatar-sm.mr-3.chat-profile-picture(src=`${userLoged.avatar}` id="ava")
+                                                    img.user-detail-trigger.rounded-circle.shadow.avatar-sm.mr-3.chat-profile-picture(src=`${userLoged.avatar}` alt="img" id="ava")
                                                     a.ml-3 #{userLoged.full_name}
                                                 else 
                                                     img.user-detail-trigger.rounded-circle.shadow.avatar-sm.mr-3.chat-profile-picture(src='/images/avatar-default.jpg' id="ava")
@@ -233,14 +233,17 @@ block content
                                                     .chat-item.d-flex.pl-3.pr-0.pt-3.pb-1(class="conversation" data-id=conversation.conversation_id data-id-msg=conversation.idMsg data-id-selected=idConversation data-id-user=conversation.userID)
                                                         .w-100
                                                             .d-flex.pl-0
-                                                                if conversation.avatar
-                                                                    img.rounded-circle.shadow.avatar-sm.mr-3(src=`${conversation.avatar}`)
+                                                                if conversation.metadata
+                                                                    img.rounded-circle.shadow.avatar-sm.mr-3(src=`${conversation.metadata[0].avatar}` alt="img")
                                                                 else 
-                                                                    img.rounded-circle.shadow.avatar-sm.mr-3(src='/images/logos/avatar-default.jpg')
+                                                                    img.rounded-circle.shadow.avatar-sm.mr-3(src='/images/avatar-default.jpg')
                                                                 |
                                                                 div
                                                                     p.margin-auto.fw-400.text-dark-75
-                                                                        | #{conversation.name}
+                                                                        if conversation.metadata.length > 2
+                                                                            | #{conversation.conversation_name}
+                                                                        else 
+                                                                            | #{conversation.metadata[0].full_name}
                                                                         .d-flex.flex-row.mt-1
                                                                             if conversation.message
                                                                                 if conversation.message.length > 0

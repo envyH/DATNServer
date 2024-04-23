@@ -66,7 +66,6 @@ const getDataUser = async (userID) => {
         console.log(e.message);
         return null;
     }
-
 }
 
 
@@ -265,8 +264,8 @@ class ConversationService {
                     }
                     dataConversation.push(rawData);
                 })
-            )
-            // console.log(dataConversation);
+            );
+
             messageResponse.setStatusCode(200);
             messageResponse.setCode("conversation/get-list-success");
             messageResponse.setContent("Get data conversation success!");

@@ -7,23 +7,30 @@ block content
                 .p-3.chat-header
                     .d-flex
                         .w-100.d-flex.pl-0
-                            if dataHeaderMsg.avatar
+                            if dataHeaderMsg != undefined
                                 img.rounded-circle.shadow.avatar-sm.mr-3.chat-profile-picture(id='avatar' src=`${dataHeaderMsg.avatar}`)
+                                |
+                                .mr-3
+                                    a.text-decoration-none(href='!#')
+                                        p.fw-400.mb-0.text-dark-75(id='username')
+                                            | #{dataHeaderMsg.full_name}
+                                    |
+                                    p.sub-caption.text-muted.text-small.mb-0(id="conversationFocus" data-id=idConversation data-id-user=dataHeaderMsg._id)
+                                        i.la.la-clock.mr-1
+                                        | last seen today at
+                                        | {time} {A || PM}
                             else 
                                 img.rounded-circle.shadow.avatar-sm.mr-3.chat-profile-picture(id='avatar' src='/images/avatar-default.jpg')
-                            |
-                            .mr-3
-                                a.text-decoration-none(href='!#')
-                                    p.fw-400.mb-0.text-dark-75(id='username')
-                                        if dataHeaderMsg.full_name
-                                            | #{dataHeaderMsg.full_name}
-                                        else
-                                            | {username}
                                 |
-                                p.sub-caption.text-muted.text-small.mb-0(id="conversationFocus" data-id=idConversation data-id-user=dataHeaderMsg._id)
-                                    i.la.la-clock.mr-1
-                                    | last seen today at
-                                    | {time} {A || PM}
+                                .mr-3
+                                    a.text-decoration-none(href='!#')
+                                        p.fw-400.mb-0.text-dark-75(id='username')
+                                            | {username}
+                                    |
+                                    p.sub-caption.text-muted.text-small.mb-0(id="conversationFocus" data-id=idConversation)
+                                        i.la.la-clock.mr-1
+                                        | last seen today at
+                                        | {time} {A || PM}
                         |
                         //- top icon
                         .flex-shrink-0.margin-auto             
@@ -72,11 +79,11 @@ block content
                             if message.sender_id + "" !== userLoged._id + ""
                                 .left-chat-message.fs-13.mb-2.pb-2
                                     .d-flex.flex-row.mb-2
-                                        if message.message_type.toString() == "text"
+                                        if message.message_type === 1
                                             p.mb-0.mr-3.pr-4 #{message.message}
-                                        else if message.message_type.toString() == "image"
+                                        else if message.message_type === 0
                                             img.mb-0.mr-1.mt-1.pr-4(src=`${message.message}` width='150' height='100' style='border-radius: 8px;')
-                                        else if message.message_type.toString() == "video"
+                                        else if message.message_type === 2
                                             video.mb-0.mr-3.pr-6(src=`${message.message}`  width='200' type='video/mp4'  controls='' style='border-radius: 8px;')
                                         |
                                         .message-options.mt-3
@@ -100,11 +107,11 @@ block content
                                     .right-chat-message.fs-13
                                         .mb-0.mr-3.pr-4.pb-2
                                             .d-flex.flex-row
-                                                if message.message_type.toString() == "text"
+                                                if message.message_type === 1
                                                     .pr-2 #{message.message}
-                                                else if message.message_type.toString() == "image"
+                                                else if message.message_type === 0
                                                     img.pr-6.mb-2(src=`${message.message}` width='150' height='100' style='border-radius: 8px;')
-                                                else if message.message_type.toString() == "video"
+                                                else if message.message_type === 2
                                                     video.pr-6.mb-2(src=`${message.message}`  width='200' type='video/mp4'  controls='' style='border-radius: 8px;')
                                                 |
                                         |

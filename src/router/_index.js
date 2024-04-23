@@ -27,6 +27,7 @@ router.get('/', (req, res) => {
 router.post('/category/create', upload.single('image'), CategoryController.create);
 router.get('/category', CategoryController.show);
 router.get('/chat', ChatController.show);
+router.get('/chat/c', ChatController.show);
 router.get('/customer', CustomerController.show);
 router.get('/banner', BannerController.show);
 router.get('/home', HomeController.show);
