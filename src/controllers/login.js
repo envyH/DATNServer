@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const jwt = require("jsonwebtoken");
 const moment = require('moment-timezone');
 
 const { } = require('../models/');
@@ -43,10 +44,14 @@ const doLoginAdmin = async (res, username, password) => {
                 timestamp
             });
         }
+        let token = jwt.sign({ admin: admin }, process.env.ACCESS_TOKEN_SECRET, {
+            expiresIn: "10h",
+        });
         return res.send({
             message: "Login admin success",
             statusCode: 200,
             metadata: admin,
+            token,
             code: `auth/login-admin-success`,
             timestamp
         });

@@ -101,6 +101,29 @@ class MessageService {
         messageResponse.setId(id);
         messageResponse.setCreatedAt(timestamp);
 
+        let imageUpload;
+        let videoUpload;
+
+        try {
+            if (req.files["images"]) {
+                imageUpload = req.files["images"];
+            }
+            if (req.files["video"]) {
+                videoUpload = req.files["video"];
+            }
+        } catch (e) {
+            console.log(`addMessagee: ${e.message} at ${timestamp}`);
+            messageResponse.setStatusCode(400);
+            messageResponse.setCode("message/error-read-fields-file-upload");
+            messageResponse.setContent("error read fields file upload");
+            return res.send({
+                message: messageResponse.toJSON(),
+                statusCode: 400,
+                code: "message/error-read-fields-file-upload",
+                timestamp,
+            });
+        }
+
         if (
             conversationID === undefined ||
             conversationID.toString().trim().length === 0 ||
@@ -132,6 +155,9 @@ class MessageService {
                 timestamp,
             });
         }
+
+        console.log("===============");
+        console.log("uploadImg", imageUpload);
 
         let isValidType = checkTypeMessage(parseInt(messageType));
         if (!isValidType) {

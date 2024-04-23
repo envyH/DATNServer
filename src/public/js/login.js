@@ -2,7 +2,7 @@
 /**
  * Enum for common colors.
  * @readonly
- * @enum {{name: string, hex: string}}
+ * @enum {{value: number, role: string}}
  */
 const TYPE_LOGIN = Object.freeze({
     ADMIN: { value: 0, role: "admin" },
@@ -84,9 +84,10 @@ const doLogin = (username, password, type) => {
                 alert(message);
                 break;
             case "auth/login-admin-success":
-                const { metadata } = myDataResponse;
+                const { metadata, token } = myDataResponse;
                 const { avatar, email, full_name, phone_number } = metadata;
                 setCookie("dataUserLogged", btoa(JSON.stringify(metadata)), 2);
+                setCookie("token", btoa(token), 2);
                 window.location.assign("/home");
                 break;
 
@@ -122,6 +123,17 @@ function getCookie(name) {
 
 function eraseCookie(name) {
     document.cookie = name + '=; Max-Age=-99999999;';
+}
+
+function deleteAllCookies() {
+    const cookies = document.cookie.split(";");
+
+    for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i];
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    }
 }
 
 function updateCookie(name, value, days) {

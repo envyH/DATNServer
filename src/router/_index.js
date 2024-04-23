@@ -3,7 +3,7 @@ const router = express.Router();
 
 const multer = require('multer');
 const storage = multer.memoryStorage();
-const upload = multer({storage: storage});
+const upload = multer({ storage: storage });
 
 
 const CategoryController = require('../controllers/category');
@@ -26,8 +26,9 @@ router.get('/', (req, res) => {
 
 router.post('/category/create', upload.single('image'), CategoryController.create);
 router.get('/category', CategoryController.show);
-router.get('/chat', ChatController.show);
-router.get('/chat/c', ChatController.show);
+router.get('/chat', ChatController.showConversation);
+router.post('/chat/', ChatController.checkConversationID);
+router.get('/chat/c/:conversationid', ChatController.showMessage);
 router.get('/customer', CustomerController.show);
 router.get('/banner', BannerController.show);
 router.get('/home', HomeController.show);

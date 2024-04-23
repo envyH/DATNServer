@@ -8,7 +8,15 @@ const { checkPermission } = require('../middlewares/middleware');
 const MessageService = require('../services/message');
 
 
-router.post("/create", checkPermission, MessageService.addMessage);
+router.post("/create",
+    checkPermission,
+    upload.fields([
+        { name: "files", maxCount: 3 },
+        { name: "images", maxCount: 3 },
+        { name: "video", maxCount: 1 },
+    ]),
+    MessageService.addMessage
+);
 router.post("/get", checkPermission, MessageService.get);
 
 
