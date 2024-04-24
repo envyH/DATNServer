@@ -5,10 +5,10 @@
  * @enum {{value: number, text: string}}
  */
 const TYPE_MESSAGE = Object.freeze({
-    IMAGE: { value: 0, text: "image" },
-    TEXT: { value: 1, text: "text" },
-    VIDEO: { value: 2, text: "video" },
-    FILE: { value: 3, text: "file" }
+    IMAGE: {value: 0, text: "image"},
+    TEXT: {value: 1, text: "text"},
+    VIDEO: {value: 2, text: "video"},
+    FILE: {value: 3, text: "file"}
 });
 
 const checkTypeMessage = (value) => {
@@ -32,9 +32,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     socket.on('user-chat', (data) => {
         // console.log(data);
-        const { conversation_id, message, message_type, sender_id, status, created_at } = data;
+        const {conversation_id, message, message_type, sender_id, status, created_at} = data;
         const dataUserLogged = getCookie("dataUserLogged");
-        const { _id } = JSON.parse(atob(dataUserLogged));
+        const {_id} = JSON.parse(atob(dataUserLogged));
         let time = created_at.slice(created_at.length - 8, created_at.length - 3);
 
         let isFakeChat = document.getElementById("fake-chat").checked;
@@ -44,8 +44,7 @@ document.addEventListener("DOMContentLoaded", function () {
             // console.log(sender_id, _id);
             if (_id === sender_id) {
                 displayMessageRight(_id, message, message_type, time);
-            }
-            else {
+            } else {
                 displayMessageLeft(_id, message, message_type, time);
             }
         }
@@ -76,8 +75,7 @@ document.addEventListener("DOMContentLoaded", function () {
             inputMsg.value = `${textBeforeCursor}\n${textAfterCursor}`;
             const rows = (inputMsg.value.match(/\n/g) || []).length + 1;
             inputMsg.rows = rows < 7 ? rows : 7; // Giới hạn tối đa là 7 hàng
-        }
-        else if (event.key === "Enter") {
+        } else if (event.key === "Enter") {
             event.preventDefault();
             btnSendMsg.click();
         }
@@ -87,8 +85,8 @@ document.addEventListener("DOMContentLoaded", function () {
         let conversationID = conversationFocus.getAttribute('data-id');
         if (conversationID.length <= 0) return
         let contentMsg = inputMsg.value.trim();
-        if (numberImageUpload == 0 && numberVideoUpload == 0 && contentMsg.length == 0) {
-            return
+        if (numberImageUpload === 0 && numberVideoUpload === 0 && contentMsg.length === 0) {
+
         } else if (numberImageUpload > 0) {
             doSendChat(conversationID, contentMsg, TYPE_MESSAGE.IMAGE.value, imageInput, null);
         } else if (numberVideoUpload > 0) {
@@ -105,7 +103,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (dataUserLogged === undefined || token === undefined) {
             return;
         }
-        const { _id } = JSON.parse(atob(dataUserLogged));
+        const {_id} = JSON.parse(atob(dataUserLogged));
         try {
             const formDataMsg = new FormData();
             formDataMsg.append("conversationID", conversationID);
@@ -129,14 +127,14 @@ document.addEventListener("DOMContentLoaded", function () {
             })
                 .then(function (response) {
                     // console.log(response);
-                    const { data } = response
+                    const {data} = response
                     if (data == null) return
-                    const { statusCode, timestamp, code } = data;
-                    const { image, title, content } = data.message;
+                    const {statusCode, timestamp, code} = data;
+                    const {image, title, content} = data.message;
                     if (code === "message/create-success") {
                         socket.emit('on-chat', data.newMessage);
                         resetInput();
-                    } else if (code == "auth/wrong-token") {
+                    } else if (code === "auth/wrong-token") {
                         eraseCookie("dataUserLogged");
                         eraseCookie("token");
                         eraseCookie("typeLogin");
@@ -149,7 +147,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     console.log(error);
                 });
         } catch (e) {
-            console.log(error);
+            console.log(e);
         }
     }
 
@@ -165,16 +163,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     const displayMessageRight = (id, message, messageType, time, images, video,) => {
-        var rightChatWrapper = document.createElement('div');
+        let rightChatWrapper = document.createElement('div');
         rightChatWrapper.classList.add('d-flex', 'flex-row-reverse', 'mb-2');
 
-        var rightChatMessage = document.createElement('div');
+        let rightChatMessage = document.createElement('div');
         rightChatMessage.classList.add('right-chat-message', 'fs-13');
 
-        var rightChatAction = document.createElement('div');
+        let rightChatAction = document.createElement('div');
         rightChatAction.classList.add('active-message-right');
 
-        var messageAction = document.createElement('div');
+        let messageAction = document.createElement('div');
         messageAction.classList.add('mb-0', 'mr-2', 'pr-1');
         messageAction.innerHTML = `
                             <div class="d-flex flex-row fs-6">
@@ -191,7 +189,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         rightChatAction.appendChild(messageAction);
         // Tạo nội dung của tin nhắn bên phải
-        var messageContent = document.createElement('div');
+        let messageContent = document.createElement('div');
         messageContent.classList.add('mb-0', 'mr-3', 'pr-4', 'pb-2');
 
         // text
@@ -208,30 +206,28 @@ document.addEventListener("DOMContentLoaded", function () {
             // else if (images.length > 1) {
             //     let startDiv = `<div class="d-flex flex-row"><div>`;
             //     let imageDiv = '';
-            //     let enndDiv = `</div></div>`;
+            //     let endDiv = `</div></div>`;
             //     images.forEach(image => {
             //         imageDiv += `<img class="pr-1 mb-2" src=${image} width="80" height="70" alt="img" style='border-radius: 8px;'>`;
             //     });
-            //     let viewImage = startDiv + imageDiv + enndDiv;
+            //     let viewImage = startDiv + imageDiv + endDiv;
             //     messageContent.innerHTML = viewImage;
             // }
-        }
-        else if (messageType === TYPE_MESSAGE.VIDEO.value) {
+        } else if (messageType === TYPE_MESSAGE.VIDEO.value) {
             let startDiv = `<div class="d-flex flex-row"><div>`;
-            let enndDiv = `</div></div>`;
+            let endDiv = `</div></div>`;
             let videoDiv = `<video class="pr-6 mb-2" src=${message} width="200" type='video/mp4' controls='' style='border-radius: 8px;'>`;
 
-            let viewImage = startDiv + videoDiv + enndDiv;
-            messageContent.innerHTML = viewImage;
+            messageContent.innerHTML = startDiv + videoDiv + endDiv;
         }
 
         rightChatMessage.appendChild(messageContent);
 
         // Tạo các tùy chọn của tin nhắn bên phải
-        var messageOptions = document.createElement('div');
+        let messageOptions = document.createElement('div');
         messageOptions.classList.add('message-options', 'dark', 'mt-3');
 
-        var messageTime = document.createElement('div');
+        let messageTime = document.createElement('div');
         messageTime.classList.add('message-time');
         messageTime.innerHTML = '<div class="d-flex flex-row">' +
             `<div class="mr-2">${time}</div>` +
@@ -239,7 +235,7 @@ document.addEventListener("DOMContentLoaded", function () {
             '</div>';
         messageOptions.appendChild(messageTime);
 
-        var messageArrow = document.createElement('div');
+        let messageArrow = document.createElement('div');
         messageArrow.classList.add('message-arrow');
         messageArrow.innerHTML = '<i class="text-muted la la-angle-down fs-17"></i>';
         messageOptions.appendChild(messageArrow);
@@ -251,9 +247,9 @@ document.addEventListener("DOMContentLoaded", function () {
         rightChatWrapper.appendChild(rightChatAction);
 
         // Chèn tin nhắn bên phải vào phần chat panel
-        var chatPanel = document.querySelector('.chat-panel-scroll');
+        let chatPanel = document.querySelector('.chat-panel-scroll');
         if (chatPanel) {
-            var chatPanelContent = chatPanel.querySelector('.p-3');
+            let chatPanelContent = chatPanel.querySelector('.p-3');
             if (chatPanelContent) {
                 chatPanelContent.appendChild(rightChatWrapper);
             }
@@ -261,16 +257,15 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     const displayMessageLeft = (id, message, messageType, time, images, video) => {
-        var leftChatMessage = document.createElement('div');
+        let leftChatMessage = document.createElement('div');
         leftChatMessage.classList.add('left-chat-message', 'fs-13', 'mb-2', 'pb-2');
 
         // Tạo nội dung của tin nhắn bên trái
-        var messageContent = document.createElement('p');
+        let messageContent = document.createElement('p');
         if (messageType === TYPE_MESSAGE.TEXT.value) {
             messageContent.classList.add('mb-0', 'mr-3', 'pr-4');
             messageContent.textContent = `${message}`;
-        }
-        else if (messageType === TYPE_MESSAGE.IMAGE.value) {
+        } else if (messageType === TYPE_MESSAGE.IMAGE.value) {
             messageContent = document.createElement('img');
             messageContent.classList.add('mb-0', 'mr-1', 'mt-1', 'pr-4');
             messageContent.src = message;
@@ -297,16 +292,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
         leftChatMessage.appendChild(messageContent);
 
-        var messageOptions = document.createElement('div');
+        let messageOptions = document.createElement('div');
         messageOptions.classList.add('message-options', 'mt-3');
 
-        var messageTime = document.createElement('div');
+        let messageTime = document.createElement('div');
         messageTime.classList.add('message-time');
 
         messageTime.textContent = `${time}`;
         messageOptions.appendChild(messageTime);
 
-        var messageArrow = document.createElement('div');
+        let messageArrow = document.createElement('div');
         messageArrow.classList.add('message-arrow');
         messageArrow.innerHTML = '<i class="text-muted la la-angle-down fs-17"></i>';
         messageOptions.appendChild(messageArrow);
@@ -314,9 +309,9 @@ document.addEventListener("DOMContentLoaded", function () {
         leftChatMessage.appendChild(messageOptions);
 
         // Chèn tin nhắn bên phải vào phần chat panel
-        var chatPanel = document.querySelector('.chat-panel-scroll');
+        let chatPanel = document.querySelector('.chat-panel-scroll');
         if (chatPanel) {
-            var chatPanelContent = chatPanel.querySelector('.p-3');
+            let chatPanelContent = chatPanel.querySelector('.p-3');
             if (chatPanelContent) {
                 chatPanelContent.appendChild(leftChatMessage);
             }
@@ -434,7 +429,7 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
             areaImageUpload.style.display = 'none';
         }
-    };
+    }
 
     function handleVideoUpload(event) {
         const areaVideoUpload = document.getElementById('area-upload');
@@ -478,15 +473,15 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
             areaVideoUpload.style.display = 'none';
         }
-    };
+    }
 })
 
 
 function getCookie(name) {
-    var nameEQ = name + "=";
-    var ca = document.cookie.split(';');
-    for (var i = 0; i < ca.length; i++) {
-        var c = ca[i];
+    let nameEQ = name + "=";
+    let ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
         while (c.charAt(0) === ' ') c = c.substring(1, c.length);
         if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
     }
@@ -495,15 +490,4 @@ function getCookie(name) {
 
 function eraseCookie(name) {
     document.cookie = name + '=; Max-Age=-99999999;';
-}
-
-function deleteAllCookies() {
-    const cookies = document.cookie.split(";");
-
-    for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i];
-        const eqPos = cookie.indexOf("=");
-        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    }
 }

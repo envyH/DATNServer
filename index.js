@@ -10,7 +10,6 @@ const { default: helmet } = require('helmet');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const cookieParser = require("cookie-parser");
-const session = require('express-session');
 const cors = require('cors');
 
 // view engine setup
@@ -57,7 +56,8 @@ process.on('warning', (warning) => {
 // init DB
 require('./src/configs/mongoose');
 // init Firebase admin
-require('./src/configs/firebase/');
+require('./src/configs/firebase');
+
 // init route
 app.use('/', require('./src/router/_index'));
 app.use('/v1/api/', require('./src/router/api'));
@@ -80,7 +80,7 @@ app.use((req, res, next) => {
     next(error);
 });
 
-app.use((error, req, res, next) => {
+app.use((error, req, res) => {
     const statusCode = error.status | 500;
     res.locals.message = error.message || "Internal Server Error";
     res.locals.error = req.app.get("env") === "development" ? error : {};

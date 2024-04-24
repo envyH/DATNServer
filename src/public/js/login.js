@@ -5,8 +5,8 @@
  * @enum {{value: number, role: string}}
  */
 const TYPE_LOGIN = Object.freeze({
-    ADMIN: { value: 0, role: "admin" },
-    EMPLOYEE: { value: 1, role: "employee" }
+    ADMIN: {value: 0, role: "admin"},
+    EMPLOYEE: {value: 1, role: "employee"}
 });
 
 const checkTypeLogin = (value) => {
@@ -21,13 +21,12 @@ const checkTypeLogin = (value) => {
 document.addEventListener("DOMContentLoaded", function () {
     const dataUserLogged = getCookie("dataUserLogged");
     if (dataUserLogged != null) {
-        const { avatar, email, full_name, phone_number } = JSON.parse(dataUserLogged);
+        // const { avatar, email, full_name, phone_number } = JSON.parse(dataUserLogged);
         window.location.assign("/home");
     }
 
     const adminBtn = document.getElementById("withAdmin");
     const employeeBtn = document.getElementById("withEmployee");
-
 
 
     let typeLogin = getCookie("typeLogin");
@@ -41,8 +40,7 @@ document.addEventListener("DOMContentLoaded", function () {
             setCookie("typeLogin", TYPE_LOGIN.EMPLOYEE.value.toString(), 1);
             window.location.assign("/login");
         });
-    }
-    else {
+    } else {
         let flag = checkTypeLogin(parseInt(typeLogin));
         if (!flag) {
             console.log(`${typeLogin} not valid`);
@@ -61,31 +59,30 @@ document.addEventListener("DOMContentLoaded", function () {
             if (username.length === 0 || password.length === 0) {
                 return
             }
-            doLogin(username, password, typeLogin);
+            doLogin(username, password);
         })
     }
 
 
-
 });
 
-const doLogin = (username, password, type) => {
+const doLogin = (username, password) => {
     let xhr = new XMLHttpRequest();
     let endPoint = `/do-login`;
     xhr.open('POST', endPoint, true);
     xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.send(JSON.stringify({ username, password }));
+    xhr.send(JSON.stringify({username, password}));
 
     xhr.onload = function () {
         const myDataResponse = JSON.parse(xhr.response);
-        const { message, statusCode, code, timestamp } = myDataResponse;
+        const {message, statusCode, code, timestamp} = myDataResponse;
         switch (code) {
             case "auth/login-admin-failed":
                 alert(message);
                 break;
             case "auth/login-admin-success":
-                const { metadata, token } = myDataResponse;
-                const { avatar, email, full_name, phone_number } = metadata;
+                const {metadata, token} = myDataResponse;
+                const {avatar, email, full_name, phone_number} = metadata;
                 setCookie("dataUserLogged", btoa(JSON.stringify(metadata)), 2);
                 setCookie("token", btoa(token), 2);
                 window.location.assign("/home");
@@ -101,9 +98,9 @@ const doLogin = (username, password, type) => {
 
 
 function setCookie(name, value, days) {
-    var expires = "";
+    let expires = "";
     if (days) {
-        var date = new Date();
+        let date = new Date();
         date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
         expires = "; expires=" + date.toUTCString();
     }
@@ -111,10 +108,10 @@ function setCookie(name, value, days) {
 }
 
 function getCookie(name) {
-    var nameEQ = name + "=";
-    var ca = document.cookie.split(';');
-    for (var i = 0; i < ca.length; i++) {
-        var c = ca[i];
+    let nameEQ = name + "=";
+    let ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
         while (c.charAt(0) === ' ') c = c.substring(1, c.length);
         if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
     }
@@ -123,17 +120,6 @@ function getCookie(name) {
 
 function eraseCookie(name) {
     document.cookie = name + '=; Max-Age=-99999999;';
-}
-
-function deleteAllCookies() {
-    const cookies = document.cookie.split(";");
-
-    for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i];
-        const eqPos = cookie.indexOf("=");
-        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    }
 }
 
 function updateCookie(name, value, days) {

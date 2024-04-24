@@ -13,12 +13,18 @@ const formatType = "YYYY-MM-DD-HH:mm:ss";
 const FirebaseService = require('./firebase');
 
 const { isNumber } = require('../utils/index');
-const { STATUS_NOTIFICATION, checkStatus } = require('../utils/notification');
+const { STATUS_NOTIFICATION, checkStatus, TYPE_NOTIFICATION } = require('../utils/notification');
 const { NotificationModel } = require('../models');
+const { sendNotification } = require('../utils/notification');
 const MessageResponses = require('../models/model.message.response');
 
 
+
+
 class NotificationService {
+    createNotificationMessage = async (title, content, fcm, type) => {
+        sendNotification(title, content, type, undefined, fcm);
+    }
     createNotification = async (customerID, title, content, img, fcm, type) => {
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
@@ -32,24 +38,8 @@ class NotificationService {
             created_at: timestamp,
         });
         await notification.save();
-
-        // send notification
-        let message = {
-            data: {
-                title: title,
-                body: content,
-                type: type + "",
-                imageURL: img !== undefined ? img.toString().trim().length > 0 ? img : "" : "",
-            },
-            token: fcm,
-        };
-        admin.messaging().send(message)
-            .then((response) => {
-                console.log('Successfully sent message:', response);
-            })
-            .catch((error) => {
-                console.error('Error sending message:', error);
-            });
+        // TODO Send notification
+        sendNotification(title, content, type, img, fcm);
     }
 
     getList = async (req, res) => {
@@ -201,7 +191,7 @@ class NotificationService {
         const content = req.body.content;
         const img = req.body.img;
         const fcm = req.body.fcm;
-        const type = req.body.type;
+        let type = req.body.type + "";
 
         let date = new Date();
         let timestamp = moment(date).tz(specificTimeZone).format(formatType);
@@ -237,10 +227,11 @@ class NotificationService {
             return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "notification/missing-fcm", timestamp });
         }
         if (type === undefined || type.toString().trim().length == 0) {
-            messageResponse.setStatusCode(400);
-            messageResponse.setCode("notification/missing-type");
-            messageResponse.setContent("missing type");
-            return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "notification/missing-type", timestamp });
+            // messageResponse.setStatusCode(400);
+            // messageResponse.setCode("notification/missing-type");
+            // messageResponse.setContent("missing type");
+            // return res.send({ message: messageResponse.toJSON(), statusCode: 400, code: "notification/missing-type", timestamp });
+            type = TYPE_NOTIFICATION.DEFAULT.value + "";
         }
 
         // create notification

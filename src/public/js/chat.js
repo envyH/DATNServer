@@ -3,17 +3,16 @@ document.addEventListener("DOMContentLoaded", function () {
     itemConversation.forEach(function (item) {
         let idConversation = item.getAttribute("data-id");
         let idConversationSelected = item.getAttribute("data-id-selected");
-        if (idConversation == idConversationSelected) {
+        if (idConversation === idConversationSelected) {
             item.style.backgroundColor = 'aliceblue';
-        }
-        else {
+        } else {
             item.style.backgroundColor = '';
         }
         item.addEventListener('click', () => {
             const dataUserLogged = getCookie('dataUserLogged');
             if (dataUserLogged) {
-                const { _id } = JSON.parse(atob(dataUserLogged));
-                getContentMsg(idConversation, _id);
+                const {_id} = JSON.parse(atob(dataUserLogged));
+                getContentMsg(idConversation, _id).then(r => console.log(r));
             }
         });
     });
@@ -24,12 +23,11 @@ document.addEventListener("DOMContentLoaded", function () {
             userLoggedID: userLoggedID
         })
             .then(function (response) {
-                const { code, statusCode, message } = response.data;
+                const {statusCode, message} = response.data;
                 if (statusCode === 200) {
                     const conversationID = response.data.conversationID;
                     window.location.assign(`/chat/c/${btoa(conversationID)}`);
-                }
-                else {
+                } else {
                     alert(message)
                 }
             })
@@ -42,22 +40,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 function getCookie(name) {
-    var nameEQ = name + "=";
-    var ca = document.cookie.split(';');
-    for (var i = 0; i < ca.length; i++) {
-        var c = ca[i];
+    let nameEQ = name + "=";
+    let ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
         while (c.charAt(0) === ' ') c = c.substring(1, c.length);
         if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
     }
     return null;
-}
-
-function setCookie(name, value, days) {
-    var expires = "";
-    if (days) {
-        var date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "") + expires + "; path=/";
 }
