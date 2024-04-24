@@ -15,7 +15,6 @@ const initializeSocket = (server) => {
         // New message
         socket.on('on-chat', data => {
             io.emit("user-chat", data)
-            console.log(data);
         });
         //
         socket.on('on-update-chat', data => {
